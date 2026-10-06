@@ -154,7 +154,7 @@ VITE_API_BASE_URL=http://localhost:8000
 ---
 ### 📝 License
 
-## MIT License © 2025 Vashu Singh
+## MIT License © 2025 Vashu Singh, Praveen Kumar V
 
 ### Acknowledgments
 
