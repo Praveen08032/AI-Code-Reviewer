@@ -1,131 +1,45 @@
-import React, { useState } from "react";
-import axios from "axios";
-import CodeEditor from "@/components/CodeEditor";
-import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import Editor from "@monaco-editor/react";
+import { addSample, errorMessage } from "@/lib/api";
+import { defineTheme } from "@/lib/editorTheme";
 
-const AddSampleAnswer = () => {
-  const navigate = useNavigate();
-  const [questionTitle, setQuestionTitle] = useState("");
-  const [language, setLanguage] = useState("python");
-  const [idealCode, setIdealCode] = useState("");
-  const [message, setMessage] = useState(null);
-  const [error, setError] = useState(null);
+export default function AddSampleAnswer() {
+  const [title, setTitle] = useState("");
+  const [lang, setLang] = useState("python");
+  const [code, setCode] = useState("");
+  const [msg, setMsg] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = async (e) => {
+  async function save(e) {
     e.preventDefault();
-    setMessage(null);
-    setError(null);
-
+    if (!title.trim() || !code.trim()) { setMsg({ kind: "err", text: !title.trim() ? "Enter a question title." : "Write the model answer code." }); return; }
+    setSaving(true); setMsg(null);
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/add-sample-answer`,
-        {
-          question_title: questionTitle,
-          language,
-          ideal_code: idealCode,
-        }
-      );
-
-      setMessage(response.data.message);
-      setQuestionTitle("");
-      setIdealCode("");
-    } catch (err) {
-      const detail = err.response?.data?.detail;
-      setError(detail || "Failed to add sample answer.");
-    }
-  };
+      const r = await addSample({ question_title: title, language: lang, ideal_code: code });
+      setMsg({ kind: "ok", text: `${r.message} “${title}” can now be practised from the library.` }); setTitle(""); setCode("");
+    } catch (err) { setMsg({ kind: "err", text: errorMessage(err) }); }
+    setSaving(false);
+  }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white px-4 py-10">
-      {/* Background Glow Effects */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-1/3 left-1/4 w-72 h-72 bg-green-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-      <div className="max-w-4xl mx-auto bg-gray-800/40 backdrop-blur-lg border border-gray-700 p-8 rounded-2xl shadow-xl">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-xl flex items-center justify-center">
-            <Plus className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold">Add Sample Answer</h2>
-            <p className="text-gray-400">
-              Add sample answers to improve code feedback
-            </p>
+    <section className="page" aria-labelledby="h-add">
+      <div className="ph"><h1 id="h-add">Add Sample<span>/new model answer</span></h1><span className="sp" /><Link className="btn btn-o" to="/sample-questions">Back to library</Link></div>
+      <form className="form glass" onSubmit={save} noValidate>
+        {msg && <div className={`notice ${msg.kind}`} role={msg.kind === "err" ? "alert" : "status"}>{msg.text}</div>}
+        <div className="two">
+          <div><label htmlFor="title">Question title</label><input className="field" id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Valid Parentheses" /></div>
+          <div><label htmlFor="slang">Language</label><select className="field" id="slang" value={lang} onChange={(e) => setLang(e.target.value)}><option value="python">Python</option><option value="javascript">JavaScript</option></select></div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+          <label htmlFor="ideal">Model answer</label>
+          <div className="monaco-wrap" id="ideal">
+            <Editor height="100%" language={lang} theme="codecheck" value={code} onChange={(v) => setCode(v ?? "")} beforeMount={defineTheme}
+              options={{ fontSize: 13.5, fontFamily: "JetBrains Mono, monospace", minimap: { enabled: false }, scrollBeyondLastLine: false, automaticLayout: true, padding: { top: 12 } }} />
           </div>
         </div>
-
-        {message && (
-          <div className="mb-6 p-4 rounded-lg bg-green-900/30 border border-green-600 text-green-300">
-            {message}
-          </div>
-        )}
-        {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-900/30 border border-red-600 text-red-300">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block mb-2 font-medium text-gray-300">
-              Question Title
-            </label>
-            <input
-              type="text"
-              className="w-full bg-gray-900 text-white border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              value={questionTitle}
-              onChange={(e) => setQuestionTitle(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block mb-2 font-medium text-gray-300">
-              Language
-            </label>
-            <select
-              className="w-full bg-gray-900 text-white border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-            >
-              <option value="python">Python</option>
-              <option value="javascript">JavaScript</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block mb-2 font-medium text-gray-300">
-              Ideal Code
-            </label>
-            <CodeEditor
-              language={language}
-              code={idealCode}
-              onChange={setIdealCode}
-            />
-          </div>
-
-          <div className="flex justify-between items-center pt-4">
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105"
-            >
-              Add Sample Answer
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105"
-            >
-              ← Back to Home
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div><button className="btn btn-g" type="submit" disabled={saving}>{saving ? "Saving…" : "Save sample answer"}</button></div>
+      </form>
+    </section>
   );
-};
-
-export default AddSampleAnswer;
+}

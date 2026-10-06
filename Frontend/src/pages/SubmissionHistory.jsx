@@ -1,107 +1,54 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { Sparkles } from "lucide-react";
+import { Fragment, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { getHistory, errorMessage } from "@/lib/api";
 
-const SubmissionHistory = () => {
-  const [submissions, setSubmissions] = useState([]);
-  const [loading, setLoading] = useState(true);
+const firstLine = (code = "") => (code.split("\n").find((l) => l.trim()) || "(empty)").trim();
+
+export default function SubmissionHistory() {
+  const [rows, setRows] = useState(null);
+  const [error, setError] = useState("");
+  const [open, setOpen] = useState(null);
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/submission-history`
-        );
-        setSubmissions(res.data);
-      } catch (err) {
-        console.error("Failed to load submission history", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHistory();
+    getHistory().then((d) => setRows([...d].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))))
+      .catch((e) => { setError(errorMessage(e)); setRows([]); });
   }, []);
 
+  const passed = rows?.filter((r) => r.pass_status).length ?? 0;
+  const toggle = (id) => setOpen((o) => (o === id ? null : id));
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl animate-pulse delay-2000"></div>
-      </div>
-
-      <div className="relative z-10 max-w-6xl mx-auto p-6">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-xl flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold text-white">
-              Submission History
-            </h2>
-            <p className="text-gray-400">
-              Your past attempts and their AI evaluations
-            </p>
-          </div>
-        </div>
-
-        {loading ? (
-          <p className="text-gray-400">Loading...</p>
-        ) : submissions.length === 0 ? (
-          <p className="text-gray-400">No submissions yet.</p>
-        ) : (
-          <div className="space-y-6">
-            {[...submissions].reverse().map((sub) => (
-              <div
-                key={sub.id}
-                className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 transition-all hover:shadow-xl hover:border-gray-500"
-              >
-                <div className="text-sm text-gray-400 mb-2">
-                  <strong className="text-white">Submitted:</strong>{" "}
-                  {new Date(sub.created_at).toLocaleString()}
-                </div>
-
-                <pre className="bg-gray-900/60 text-gray-300 p-4 rounded-md text-sm overflow-x-auto max-h-60 border border-gray-700">
-                  {sub.code}
-                </pre>
-
-                <div className="mt-4 text-sm space-y-2 text-gray-300">
-                  <div>
-                    <strong className="text-white">Language:</strong>{" "}
-                    {sub.language}
-                  </div>
-                  <div>
-                    <strong className="text-white">Pass:</strong>{" "}
-                    {sub.pass_status ? (
-                      <span className="text-green-400">✅ Passed</span>
-                    ) : (
-                      <span className="text-red-400">❌ Failed</span>
-                    )}
-                  </div>
-                  <div>
-                    <strong className="text-white">Readability:</strong>{" "}
-                    {sub.readability_score}/10
-                  </div>
-                  <div>
-                    <strong className="text-white">Efficiency:</strong>{" "}
-                    {sub.efficiency_score}/10
-                  </div>
-                  <div>
-                    <strong className="text-white">Similarity:</strong>{" "}
-                    {sub.similarity_score != null
-                      ? `${sub.similarity_score}%`
-                      : "N/A"}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+    <section className="page" aria-labelledby="h-hist">
+      <div className="ph"><h1 id="h-hist">History<span>/executions</span></h1>{rows?.length > 0 && <span className="tag green">{passed} of {rows.length} passed</span>}</div>
+      {error && <div className="notice err" style={{ marginTop: 18 }}>{error}</div>}
+      <div className="hist glass">
+        {rows === null && <p className="loading">Loading…</p>}
+        {rows && !rows.length && !error && <div className="empty"><b>No reviews yet</b><p style={{ marginBottom: 16 }}>Your submissions and their reviews will appear here.</p><Link className="btn btn-g" to="/submit?new=1">Mark my code</Link></div>}
+        {rows?.length > 0 && (
+          <table>
+            <thead><tr><th>Run</th><th>Submission</th><th>Language</th><th>Readability</th><th>Efficiency</th><th>Similarity</th><th>Result</th><th>When</th></tr></thead>
+            <tbody>
+              {rows.map((r) => (
+                <Fragment key={r.id}>
+                  <tr className="row" tabIndex={0} aria-expanded={open === r.id} onClick={() => toggle(r.id)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(r.id); } }}>
+                    <td>#{r.id}</td><td><code>{firstLine(r.code)}</code></td><td>{r.language === "python" ? "Python" : "JavaScript"}</td>
+                    <td>{r.readability_score ?? "–"}/10</td><td>{r.efficiency_score ?? "–"}/10</td><td>{r.similarity_score != null ? `${r.similarity_score}%` : "–"}</td>
+                    <td><span className={`pill ${r.pass_status ? "ok" : "no"}`}>{r.pass_status ? "✓ Passed" : "✕ Needs work"}</span></td>
+                    <td style={{ color: "var(--muted)" }}>{new Date(r.created_at).toLocaleString()}</td>
+                  </tr>
+                  {open === r.id && (
+                    <tr className="det"><td colSpan={8}><div className="det-in">
+                      <div><small>Bugs</small>{r.errors || "None"}</div>
+                      <div><small>Suggestions</small>{r.suggestions || "None"}</div>
+                      <div><small>Improved version</small>{r.corrected_code ? <pre>{r.corrected_code}</pre> : "Not provided"}</div>
+                    </div></td></tr>
+                  )}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
-    </div>
+    </section>
   );
-};
-
-export default SubmissionHistory;
+}
