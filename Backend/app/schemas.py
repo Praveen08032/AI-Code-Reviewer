@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 class CodeSubmission(BaseModel):
     language: str
@@ -42,3 +42,11 @@ class SubmissionRead(BaseModel):
     model_config = {
         "from_attributes": True  # ✅ Required for SQLAlchemy objects in Pydantic v2
     }
+
+    # created_at is stored in UTC without a timezone; mark it as UTC so the
+    # browser converts it to the user's local time
+    @field_serializer("created_at")
+    def serialize_created_at(self, value: datetime) -> str:
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.isoformat()
