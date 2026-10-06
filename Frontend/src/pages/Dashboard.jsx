@@ -32,7 +32,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!stats || !canvasRef.current) return;
-    const g = createGraph(canvasRef.current, 1400, 760, "drift");
+    const g = createGraph(canvasRef.current, 1400, 760, "tilt");
     const card = (k, v, cls = "") => `<div class="card"><div><div style="min-width:0"><small class="k">${k}</small><div class="v ${cls}">${v}</div></div></div></div>`;
     const rec = stats.recent;
     const pos = [[40, 70, ""], [10, 300, ""], [150, 470, "far"]];
@@ -58,9 +58,7 @@ export default function Dashboard() {
     g.wire(g.P("agent", "r", 0.9), g.P("k4", "l"), { label: "Efficiency", step: 1, flare: true });
     g.wire(g.P("agent", "b", 0.6), g.P("k5", "t"), { v: true, label: "Languages", step: 1, white: true });
 
-    const host = canvasRef.current, el = (sel) => g.plane.querySelector(sel);
-    const move = (e) => { const r = host.getBoundingClientRect(); g.plane.style.translate = `${((e.clientX - r.left) / r.width - 0.5) * -18}px ${((e.clientY - r.top) / r.height - 0.5) * -12}px`; };
-    if (!prefersReducedMotion()) host.addEventListener("pointermove", move);
+    const el = (sel) => g.plane.querySelector(sel);
     let alive = true, first = true;
     (async () => {
       while (alive) {
@@ -77,14 +75,16 @@ export default function Dashboard() {
         await sleep(4800);
       }
     })();
-    return () => { alive = false; host.removeEventListener("pointermove", move); g.destroy(); };
+    return () => { alive = false; g.destroy(); };
   }, [stats]);
 
   const trend = useMemo(() => {
-    if (!stats || stats.series.length < 2) return null;
-    const s = stats.series, x = (i) => (i / (s.length - 1)) * 320, y = (v) => 90 - ((v ?? 0) / 10) * 90;
+    if (!stats) return null;
+    const s = stats.series, n = s.length;
+    const x = (i) => (n === 1 ? 160 : 8 + (i / (n - 1)) * 304), y = (v) => 84 - ((v ?? 0) / 10) * 78;
     const line = (k) => s.map((d, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(d[k]).toFixed(1)}`).join(" ");
-    return { r: line("readability_score"), e: line("efficiency_score"), pass: y(5) };
+    const pts = (k) => s.map((d, i) => [x(i), y(d[k])]);
+    return { n, r: line("readability_score"), e: line("efficiency_score"), rp: pts("readability_score"), ep: pts("efficiency_score"), pass: y(5) };
   }, [stats]);
 
   return (
@@ -111,9 +111,12 @@ export default function Dashboard() {
             <h3>Marks over time<span><span style={{ color: "var(--green)" }}>●</span> Readability &nbsp;<span style={{ color: "#fff" }}>●</span> Efficiency</span></h3>
             <svg viewBox="0 0 320 90" preserveAspectRatio="none" aria-hidden="true">
               <line x1="0" x2="320" y1={trend.pass} y2={trend.pass} stroke="rgba(255,90,80,.6)" strokeDasharray="4 4" />
-              <path className="ln" pathLength="1" stroke="#4ade5a" d={trend.r} />
-              <path className="ln" pathLength="1" stroke="#eef1ed" style={{ animationDelay: ".7s" }} d={trend.e} />
+              {trend.n > 1 && <path className="ln" pathLength="1" stroke="#4ade5a" d={trend.r} />}
+              {trend.n > 1 && <path className="ln" pathLength="1" stroke="#eef1ed" style={{ animationDelay: ".7s" }} d={trend.e} />}
+              {trend.rp.map(([cx, cy], i) => <circle key={"r" + i} className="pt" cx={cx} cy={cy} r="4" fill="#4ade5a" />)}
+              {trend.ep.map(([cx, cy], i) => <circle key={"e" + i} className="pt" cx={cx} cy={cy} r="4" fill="#eef1ed" />)}
             </svg>
+            <div className="note">{trend.n < 3 ? `Based on your ${trend.n} review${trend.n === 1 ? "" : "s"} so far. The lines fill in as you review more code.` : `Your last ${trend.n} reviews · red line = pass mark (5)`}</div>
           </div>
         )}
       </div>

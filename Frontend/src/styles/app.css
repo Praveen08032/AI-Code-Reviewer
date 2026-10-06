@@ -72,6 +72,7 @@ select.field { appearance: none; cursor: pointer; background: #0b0d0b url("data:
 .plane.drift { animation: drift 16s ease-in-out infinite alternate; transform: perspective(1800px) rotateX(var(--rx)) rotateZ(var(--rz)); }
 @keyframes drift { from { --rx: 22deg; --rz: -7deg; } to { --rx: 15deg; --rz: -3deg; } }
 .plane.flat { transform: perspective(2200px) rotateX(7deg) rotateY(-5deg) rotateZ(-1deg); }
+.plane.tilt { transform: perspective(1800px) rotateX(18deg) rotateZ(-5deg); }
 svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 svg.wires g { transition: opacity .3s; }
 .w-base { fill: none; stroke: url(#wg); stroke-width: 1.8; transition: stroke-width .3s; }
@@ -149,6 +150,8 @@ svg.wires.dim g.lit .w-base { stroke-width: 3.2; } svg.wires.dim g.lit .w-glow {
 .trend { position: absolute; z-index: 12; left: 32px; bottom: 54px; width: 340px; padding: 16px 18px; }
 .trend h3 { font-size: 15px; font-weight: 600; display: flex; justify-content: space-between; gap: 8px; } .trend h3 span { color: var(--muted); font-weight: 400; font-size: 12.5px; }
 .trend svg { width: 100%; height: 90px; margin-top: 8px; overflow: visible; }
+.trend .pt { stroke: #0f110f; stroke-width: 2; }
+.trend .note { margin-top: 6px; font-size: 12px; color: var(--muted); }
 .trend .ln { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.8s var(--ease) .4s forwards; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 .empty-dash { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; z-index: 12; }
