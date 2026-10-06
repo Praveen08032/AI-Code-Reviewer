@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![Status](https://img.shields.io/badge/deployed-Railway-blue)
+![Status](https://img.shields.io/badge/backend-Render-blue)
 ![Frontend](https://img.shields.io/badge/frontend-Netlify-green)
 
 AI Code Reviewer is a web application that allows developers to submit their code and receive instant, AI-generated feedback on **bugs**, **suggestions**, **readability**, **efficiency**, and a **corrected version** (if applicable). It also compares the submitted code with ideal sample solutions and stores all submissions in a history log.
@@ -11,7 +11,7 @@ AI Code Reviewer is a web application that allows developers to submit their cod
 
 ## 🌐 Live Demo
 
-🚀 [Live App on Netlify](https://devaudit0.netlify.app/)
+🚀 [Live App on Netlify](https://codereviewer8.netlify.app/)
 
 ---
 
@@ -71,8 +71,8 @@ AI-Code-Reviewer/
 **Backend**
 
 - FastAPI
-- SQLAlchemy + SQLite
-- Google Generative AI (Gemini 2.5 Pro)
+- SQLAlchemy + PostgreSQL (Neon) / SQLite
+- Google Generative AI (Gemini Flash-Lite)
 - Uvicorn
 - Deployed on **Railway**
 
@@ -166,4 +166,5 @@ VITE_API_BASE_URL=http://localhost:8000
 - [Chart.js](https://www.chartjs.org/)
 - [Lucide Icons](https://lucide.dev/)
 - [Netlify](https://www.netlify.com/)
-- [Railway](https://railway.app/)
+- [Render](https://render.com/)
+- [Neon](https://neon.tech/)
