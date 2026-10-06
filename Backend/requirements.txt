@@ -19,6 +19,5 @@ click==8.2.1
 colorama==0.4.6
 tqdm==4.67.1
 jiter==0.10.0
-openai==1.93.0
 idna==3.10
 distro==1.9.0

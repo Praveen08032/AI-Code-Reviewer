@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
@@ -25,8 +25,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# One database session per request, always closed afterwards (even on errors)
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+# Plain "def" (not async): the Gemini call is blocking, so FastAPI runs it in a worker thread
 @app.post("/submit-code", response_model=CodeFeedback)
-async def submit_code(data: CodeSubmission):
+def submit_code(data: CodeSubmission, db: Session = Depends(get_db)):
     try:
         # Step 1: Get raw AI feedback
         ai_reply = get_gemini_feedback(data.language, data.code)
@@ -40,9 +51,8 @@ async def submit_code(data: CodeSubmission):
         pass_status = readability >= 5 and efficiency >= 5
 
         # Step 4: Compare with sample answer
-        db: Session = SessionLocal()
         sample = db.query(SampleAnswer).filter_by(
-            language=data.language,
+            language=data.language.strip().lower(),
             question_title=data.question_title.strip().lower()
         ).first()
 
@@ -87,19 +97,16 @@ async def submit_code(data: CodeSubmission):
         )
         db.add(db_submission)
         db.commit()
-        db.refresh(db_submission)
-        db.close()
 
         return feedback
 
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 # Optional: Seed route for a sample answer
 @app.post("/add-sample-answer")
-def add_sample_answer(data: SampleAnswerCreate):
-    db = SessionLocal()
-
+def add_sample_answer(data: SampleAnswerCreate, db: Session = Depends(get_db)):
     # Check if sample already exists for that question + language
     existing = db.query(SampleAnswer).filter_by(
         question_title=data.question_title.strip().lower(),
@@ -107,7 +114,6 @@ def add_sample_answer(data: SampleAnswerCreate):
     ).first()
 
     if existing:
-        db.close()
         raise HTTPException(status_code=400, detail="Sample answer already exists for this question and language.")
 
     sample = SampleAnswer(
@@ -118,15 +124,12 @@ def add_sample_answer(data: SampleAnswerCreate):
 
     db.add(sample)
     db.commit()
-    db.close()
 
     return {"message": "Sample answer added successfully."}
 
 @app.get("/sample-questions")
-def get_sample_questions():
-    db = SessionLocal()
+def get_sample_questions(db: Session = Depends(get_db)):
     samples = db.query(SampleAnswer).all()
-    db.close()
     return [
         {
             "id": s.id,
@@ -138,8 +141,5 @@ def get_sample_questions():
     ]
 
 @app.get("/submission-history", response_model=List[SubmissionRead])
-def get_history():
-    db = SessionLocal()
-    records = db.query(Submission).all()
-    db.close()
-    return records
+def get_history(db: Session = Depends(get_db)):
+    return db.query(Submission).all()

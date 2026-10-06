@@ -14,6 +14,10 @@ const SubmitCode = () => {
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Only show questions that have a sample answer in the selected language
+  const filteredQuestions = questionOptions.filter((q) => q.language === language);
 
   const scrollRef = useRef(null);
 
@@ -40,14 +44,14 @@ const SubmitCode = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    setLoading(true);
+    setError(null);
 
     if (!code.trim() || !language || !questionTitle) {
-      alert("Please fill in all fields.");
-      setLoading(false);
+      setError("Please choose a language and question, and write some code.");
       return;
     }
 
+    setLoading(true);
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/submit-code`,
@@ -57,6 +61,14 @@ const SubmitCode = () => {
       setShowFeedback(true);
     } catch (err) {
       console.error("Submission failed:", err);
+      const detail = err.response?.data?.detail || "";
+      if (detail.includes("429") || detail.toLowerCase().includes("quota")) {
+        setError("The AI's free daily limit has been reached. Please try again later.");
+      } else if (!err.response) {
+        setError("Could not reach the server. It may be waking up, so please try again in a minute.");
+      } else {
+        setError("The AI review failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -117,7 +129,10 @@ const SubmitCode = () => {
               </label>
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(e) => {
+                  setLanguage(e.target.value);
+                  setQuestionTitle("");
+                }}
                 className="w-full bg-gray-800/50 text-white border border-gray-700 rounded-xl px-4 py-3 mt-2 focus:outline-none"
               >
                 <option value="python">🐍 Python</option>
@@ -136,7 +151,7 @@ const SubmitCode = () => {
                 className="w-full bg-gray-800/50 text-white border border-gray-700 rounded-xl px-4 py-3 mt-2 focus:outline-none"
               >
                 <option value="">🎯 Choose your challenge...</option>
-                {questionOptions.map((q) => (
+                {filteredQuestions.map((q) => (
                   <option key={q.id} value={q.question_title}>
                     {q.question_title}
                   </option>
@@ -151,6 +166,12 @@ const SubmitCode = () => {
               </label>
               <CodeEditor code={code} onChange={setCode} language={language} />
             </div>
+
+            {error && (
+              <div className="p-4 rounded-lg bg-red-900/30 border border-red-600 text-red-300">
+                {error}
+              </div>
+            )}
 
             {/* Submit & View Result */}
             <div className="flex flex-col sm:flex-row gap-4">
