@@ -102,7 +102,7 @@ const AddSampleAnswer = () => {
             </label>
             <CodeEditor
               language={language}
-              value={idealCode}
+              code={idealCode}
               onChange={setIdealCode}
             />
           </div>

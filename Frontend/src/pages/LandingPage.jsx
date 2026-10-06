@@ -32,7 +32,7 @@ const LandingPage = () => {
             Try Now
           </button>
           <button
-            onClick={() => navigate("/sample-answers")}
+            onClick={() => navigate("/sample-questions")}
             className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-all"
           >
             <Eye className="w-5 h-5" /> View Samples

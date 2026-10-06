@@ -174,3 +174,6 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python.venv
+
+# Local SQLite database (production uses PostgreSQL via DATABASE_URL)
+submissions.db

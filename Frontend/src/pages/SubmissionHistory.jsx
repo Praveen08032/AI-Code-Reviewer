@@ -4,6 +4,7 @@ import { Sparkles } from "lucide-react";
 
 const SubmissionHistory = () => {
   const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -14,6 +15,8 @@ const SubmissionHistory = () => {
         setSubmissions(res.data);
       } catch (err) {
         console.error("Failed to load submission history", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -44,8 +47,10 @@ const SubmissionHistory = () => {
           </div>
         </div>
 
-        {submissions.length === 0 ? (
+        {loading ? (
           <p className="text-gray-400">Loading...</p>
+        ) : submissions.length === 0 ? (
+          <p className="text-gray-400">No submissions yet.</p>
         ) : (
           <div className="space-y-6">
             {[...submissions].reverse().map((sub) => (
