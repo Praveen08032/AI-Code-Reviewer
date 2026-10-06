@@ -9,7 +9,7 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 def get_gemini_feedback(language: str, code: str) -> str:
     prompt = f"Analyze this {language} code and provide:\n- Bugs\n- Suggestions\n- Readability and efficiency score (1-10)\n- Improved version if needed.\n\nCode:\n{code}"
 
-    model = genai.GenerativeModel("models/gemini-2.5-pro")
+    model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "models/gemini-flash-latest"))
     response = model.generate_content(prompt)
     return response.text
 
