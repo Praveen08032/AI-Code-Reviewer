@@ -122,9 +122,9 @@ svg.wires.dim g.lit .w-base { stroke-width: 3.2; } svg.wires.dim g.lit .w-glow {
 .node .v small { font-size: 15px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
 .node .v.g { color: var(--green); } .node .v.r { color: var(--red); } .node .v.s { font-size: 24px; }
 .node .ttl { font-size: 19px; line-height: 1.2; } .node .ttl span { display: block; color: var(--muted); font-size: 15px; }
-.node .busy { position: absolute; inset: -1px; border-radius: 22px; border: 2px solid transparent; border-top-color: var(--green); opacity: 0; pointer-events: none; }
-.node.work .busy { opacity: 1; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* working state: a soft breathing glow (no spinning line) */
+.node.work .card { animation: workglow .9s ease-in-out infinite alternate; }
+@keyframes workglow { from { box-shadow: 0 0 0 1px rgba(141,255,155,.25), 0 0 18px -8px rgba(74,222,90,.4), 0 30px 50px -24px rgba(0,0,0,.95); } to { box-shadow: 0 0 0 1px rgba(141,255,155,.7), 0 0 50px -6px rgba(74,222,90,.7), 0 30px 50px -24px rgba(0,0,0,.95); } }
 .node.far { filter: blur(1.6px); opacity: .6; } .node.far:focus-visible, .node.far.pinned { filter: none; opacity: 1; }
 .node:focus-visible { outline: none; } .node:focus-visible .card { box-shadow: 0 0 0 2px var(--green), 0 30px 50px -24px #000; }
 .big-agent .card { border-radius: 32px; } .big-agent .card > div { border-radius: 30px; padding: 0 34px; gap: 20px; }
@@ -147,9 +147,9 @@ svg.wires.dim g.lit .w-base { stroke-width: 3.2; } svg.wires.dim g.lit .w-glow {
 .tap { position: absolute; z-index: 12; left: 34px; bottom: 22px; font: 500 12px var(--mono); color: var(--muted); letter-spacing: .08em; display: flex; align-items: center; gap: 8px; }
 .tap i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--green); animation: pulse 2s infinite; }
 @keyframes pulse { 50% { opacity: .3; } }
-.trend { position: absolute; z-index: 12; left: 32px; bottom: 54px; width: 340px; padding: 16px 18px; }
+.trend { position: absolute; z-index: 12; left: 32px; bottom: 50px; width: 310px; padding: 14px 16px; }
 .trend h3 { font-size: 15px; font-weight: 600; display: flex; justify-content: space-between; gap: 8px; } .trend h3 span { color: var(--muted); font-weight: 400; font-size: 12.5px; }
-.trend svg { width: 100%; height: 90px; margin-top: 8px; overflow: visible; }
+.trend svg { width: 100%; height: 76px; margin-top: 8px; overflow: visible; }
 .trend .pt { stroke: #0f110f; stroke-width: 2; }
 .trend .note { margin-top: 6px; font-size: 12px; color: var(--muted); }
 .trend .ln { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.8s var(--ease) .4s forwards; }
@@ -243,6 +243,6 @@ tr.det td { background: rgba(255,255,255,.015); padding: 14px 18px 18px; }
   .status { width: auto; right: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .plane.drift { animation: none; } .w-pulse, .w-tail { display: none; } .w-stream, .w-glow, .node.work .busy, .status.live .dotx, .tap i { animation: none; }
+  .plane.drift { animation: none; } .w-pulse, .w-tail { display: none; } .w-stream, .w-glow, .node.work .card, .status.live .dotx, .tap i { animation: none; }
   .page, .lib-view pre .row { animation: none; }
 }

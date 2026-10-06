@@ -78,7 +78,7 @@ export function createGraph(host, W, H, planeClass = "flat") {
     const n = document.createElement("div");
     n.className = "node " + cls; n.id = id;
     Object.assign(n.style, { left: x + "px", top: y + "px", width: w + "px", height: h + "px" });
-    n.innerHTML = html + '<div class="busy"></div><svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>';
+    n.innerHTML = html + '<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>';
     plane.appendChild(n); g.nodes[id] = { el: n, x, y, w, h };
     if (info) attachInfo(n, info, g);
     return n;

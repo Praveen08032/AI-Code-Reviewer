@@ -35,7 +35,7 @@ export default function Dashboard() {
     const g = createGraph(canvasRef.current, 1400, 760, "tilt");
     const card = (k, v, cls = "") => `<div class="card"><div><div style="min-width:0"><small class="k">${k}</small><div class="v ${cls}">${v}</div></div></div></div>`;
     const rec = stats.recent;
-    const pos = [[40, 70, ""], [10, 300, ""], [150, 470, "far"]];
+    const pos = [[40, 40, ""], [10, 215, ""], [110, 390, "far"]];
     rec.forEach((s, i) => {
       const [x, y, cls] = pos[i], lang = s.language === "python" ? "Python" : "JS";
       g.node(`r${i}`, x, y, 260, 96, card(`${ago(s.created_at)} · ${lang}`, short(firstLine(s.code)), "s"), cls, {
