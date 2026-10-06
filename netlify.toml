@@ -1,0 +1,10 @@
+[build]
+  base = "Frontend"
+  command = "npm run build"
+  publish = "dist"
+
+# Send every route to index.html so React Router handles it (page refresh on /submit etc.)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

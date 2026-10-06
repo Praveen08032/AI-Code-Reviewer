@@ -1,14 +1,15 @@
 services:
   - type: web
     name: ai-code-reviewer-backend
-    env: python
+    runtime: python
     plan: free
     region: oregon
     rootDir: Backend
     buildCommand: pip install -r requirements.txt
-    startCommand: ./start.sh
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: GEMINI_API_KEY
-        value: AIzaSyAM2Zf3MzXbgd7WaL2ra7n04w56p_BRaTw
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.9
     autoDeploy: true
-    pythonVersion: 3.10.12
