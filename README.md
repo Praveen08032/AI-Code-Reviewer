@@ -162,6 +162,7 @@ Get a free Gemini API key at [aistudio.google.com/apikey](https://aistudio.googl
 
 ### Acknowledgments
 
+- UI style inspired by AI agent workflow concepts by [RonDesignLab](https://dribbble.com/rondesignlab) on Dribbble. All code and assets in this project are original.
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [React](https://react.dev/)
 - [Vite](https://vitejs.dev/)
