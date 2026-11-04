@@ -1,4 +1,7 @@
 import { NavLink, Link, useLocation } from "react-router-dom";
+import Chatbot from "./Chatbot";
+import AccountMenu from "./AccountMenu";
+import { useAuth } from "@/lib/auth";
 
 const ITEMS = [
   { to: "/", label: "Dashboard", d: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z", end: true },
@@ -9,23 +12,26 @@ const ITEMS = [
 
 export default function Rail() {
   const { pathname } = useLocation();
+  const { user } = useAuth();
+  const items = user.is_owner ? [...ITEMS, { to: "/access", label: "User access", d: "M12 3l8 4v5c0 5-8 9-8 9s-8-4-8-9V7zM8 12l3 3 5-6" }] : ITEMS;
   return (
     <nav className="rail" aria-label="App">
-      <div className="logo" title="CodeCheck AI">
+      <Link to="/" className="logo" title="CodeCheck AI · Dashboard" aria-label="CodeCheck AI home">
         <svg viewBox="0 0 24 24" fill="none" stroke="#4ade5a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6" /></svg>
-      </div>
+      </Link>
       <Link className="tile add" to="/submit?new=1" aria-label="New review">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
         <span className="tip">New review</span>
       </Link>
-      {ITEMS.map((it) => (
+      {items.map((it) => (
         <NavLink key={it.to} to={it.to} end={it.end} aria-label={it.label}
           className={({ isActive }) => `tile ${isActive || it.also?.includes(pathname) ? "active" : ""}`}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d={it.d} /></svg>
           <span className="tip">{it.label}</span>
         </NavLink>
       ))}
-      <div className="me" title="Praveen Kumar V">PK</div>
+      <Chatbot />
+      <AccountMenu />
     </nav>
   );
 }

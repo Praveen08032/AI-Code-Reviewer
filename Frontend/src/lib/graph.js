@@ -4,7 +4,7 @@ export const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-mo
 export const sleep = (ms) => new Promise((r) => setTimeout(r, prefersReducedMotion() ? 0 : ms));
 
 /* ---------- info cards (one shared card for the whole app) ---------- */
-let card, pinned = null;
+let card, pinned = null, activeInfoElement = null;
 function ensureCard() {
   if (card) return card;
   card = document.createElement("div");
@@ -16,6 +16,9 @@ function ensureCard() {
 }
 function unpin() { if (pinned) { pinned.classList.remove("pinned"); pinned.setAttribute("aria-expanded", "false"); } pinned = null; hideInfo(); }
 export function hideInfo() {
+  activeInfoElement?.setAttribute("aria-expanded", "false");
+  activeInfoElement?.removeAttribute("aria-describedby");
+  activeInfoElement = null;
   card?.classList.remove("show");
   document.querySelectorAll("svg.wires.dim").forEach((s) => s.classList.remove("dim"));
 }
@@ -24,14 +27,21 @@ function showInfo(el, d, graph) {
   const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
   card.innerHTML = `<div class="k">${esc(d.k)}</div><h4>${esc(d.t)}</h4><p>${esc(d.b)}</p>` +
     (d.s ? `<div class="st">${d.s.map(([l, v]) => `<div>${esc(l)}<b>${esc(v)}</b></div>`).join("")}</div>` : "") +
-    `<div class="hint">Tap the card again or press Esc to close</div>`;
-  const r = el.getBoundingClientRect(), w = 300, h = card.offsetHeight || 190;
+    `<div class="hint">${pinned === el ? "Click again or press Esc to close" : "Click to keep open · Esc to close"}</div>`;
+  const w = Math.min(300, window.innerWidth - 24);
+  card.style.width = w + "px";
+  const r = el.getBoundingClientRect(), h = card.offsetHeight || 190;
   let x = r.right + 16, y = r.top + r.height / 2 - h / 2;
   if (x + w > window.innerWidth - 12) x = r.left - w - 16;
   if (x < 80) { x = Math.min(window.innerWidth - w - 12, Math.max(80, r.left + r.width / 2 - w / 2)); y = r.bottom + 12; }
-  card.style.left = x + "px";
+  card.style.left = Math.max(12, Math.min(window.innerWidth - w - 12, x)) + "px";
   card.style.top = Math.max(12, Math.min(window.innerHeight - h - 12, y)) + "px";
   card.classList.add("show");
+  activeInfoElement?.setAttribute("aria-expanded", "false");
+  activeInfoElement?.removeAttribute("aria-describedby");
+  activeInfoElement = el;
+  el.setAttribute("aria-expanded", "true");
+  el.setAttribute("aria-describedby", "icard");
   if (graph && d.w) { graph.svg.classList.add("dim"); graph.wires.forEach((wr, i) => wr.g.classList.toggle("lit", d.w.includes(i))); }
 }
 export function attachInfo(el, getInfo, graph) {
@@ -39,6 +49,18 @@ export function attachInfo(el, getInfo, graph) {
   el.tabIndex = 0; el.setAttribute("role", "button");
   el.setAttribute("aria-label", `${d().t}. ${d().b}`);
   el.setAttribute("aria-expanded", "false");
+  const preview = () => {
+    if (pinned && pinned !== el) unpin();
+    showInfo(el, d(), graph);
+  };
+  el.addEventListener("mouseenter", preview);
+  el.addEventListener("focus", preview);
+  el.addEventListener("mouseleave", () => {
+    if (pinned !== el && activeInfoElement === el && document.activeElement !== el) hideInfo();
+  });
+  el.addEventListener("blur", () => {
+    if (pinned !== el && activeInfoElement === el && !el.matches(":hover")) hideInfo();
+  });
   el.addEventListener("click", (e) => {
     e.stopPropagation();
     if (pinned === el) { unpin(); return; }
@@ -72,6 +94,7 @@ export function createGraph(host, W, H, planeClass = "flat") {
 
   g.fit = () => {
     const s = Math.min(host.clientWidth / W, host.clientHeight / H) * 0.98;
+    stage.style.setProperty("--graph-text-scale", String(Math.min(1.5, Math.max(1, 1 / Math.max(s, 0.01)))));
     stage.style.transform = `translate(${(host.clientWidth - W * s) / 2}px, ${(host.clientHeight - H * s) / 2}px) scale(${s})`;
   };
   g.node = (id, x, y, w, h, html, cls = "", info) => {
@@ -125,7 +148,7 @@ export function createGraph(host, W, H, planeClass = "flat") {
   g.unset = (id, ...cls) => g.nodes[id]?.el.classList.remove(...cls);
   const ro = new ResizeObserver(() => g.fit()); ro.observe(host);
   g.fit();
-  g.destroy = () => { ro.disconnect(); g.timers.forEach(clearTimeout); hideInfo(); stage.remove(); };
+  g.destroy = () => { ro.disconnect(); g.timers.forEach(clearTimeout); if (stage.contains(pinned)) unpin(); else hideInfo(); stage.remove(); };
   return g;
 }
 
@@ -138,14 +161,20 @@ export const ICON = {
   bot: (size = 56) => `<svg class="ico" viewBox="0 0 40 40" style="width:${size}px;height:${size}px"><rect x="10" y="12" width="20" height="17" rx="6" fill="#e7eae6"/><rect x="14" y="17" width="3.5" height="5" rx="1.7" fill="#0e100e"/><rect x="22.5" y="17" width="3.5" height="5" rx="1.7" fill="#0e100e"/><rect x="17.5" y="6" width="5" height="5" rx="2.5" fill="#e7eae6"/><rect x="5" y="16" width="3" height="9" rx="1.5" fill="#e7eae6"/><rect x="32" y="16" width="3" height="9" rx="1.5" fill="#e7eae6"/><rect x="14" y="30" width="4" height="5" rx="2" fill="#e7eae6"/><rect x="22" y="30" width="4" height="5" rx="2" fill="#e7eae6"/></svg>`,
 };
 
-export function countUp(el, to, suffix = "", decimals = 0) {
+export function countUp(el, to, suffix = "", decimals = 0, signal) {
   if (!el) return;
+  if (signal?.aborted) return;
   if (prefersReducedMotion()) { el.innerHTML = Number(to).toFixed(decimals) + suffix; return; }
   const t0 = performance.now();
+  let frame;
+  const cancel = () => { cancelAnimationFrame(frame); signal?.removeEventListener("abort", cancel); };
+  signal?.addEventListener("abort", cancel, { once: true });
   const f = (t) => {
+    if (signal?.aborted || !el.isConnected) { cancel(); return; }
     const k = Math.max(0, Math.min(1, (t - t0) / 1100));
     el.innerHTML = (to * (1 - Math.pow(1 - k, 3))).toFixed(decimals) + suffix;
-    if (k < 1) requestAnimationFrame(f);
+    if (k < 1) frame = requestAnimationFrame(f); else cancel();
   };
-  requestAnimationFrame(f);
+  frame = requestAnimationFrame(f);
+  return cancel;
 }

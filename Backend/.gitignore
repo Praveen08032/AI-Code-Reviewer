@@ -177,3 +177,4 @@ pyrightconfig.json
 
 # Local SQLite database (production uses PostgreSQL via DATABASE_URL)
 submissions.db
+.auth-backups/

@@ -1,0 +1,319 @@
+[
+  {
+    "id": "py-correct",
+    "language": "python",
+    "requirements": "Return the maximum of a nonempty list of integers. Inputs are guaranteed nonempty.",
+    "code": "def maximum(values):\n    best = values[0]\n    for value in values[1:]:\n        if value > best:\n            best = value\n    return best",
+    "expected": "no_issues",
+    "issue_terms": []
+  },
+  {
+    "id": "py-bounds",
+    "language": "python",
+    "requirements": "Return the index of target in a sorted integer list, or -1. Empty input is allowed.",
+    "code": "def binary_search(values, target):\n    lo, hi = 0, len(values)\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if values[mid] == target:\n            return mid\n        if values[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1",
+    "expected": "issues_found",
+    "issue_terms": [
+      "bound",
+      "index"
+    ]
+  },
+  {
+    "id": "py-sql",
+    "language": "python",
+    "requirements": "Look up a user by an untrusted HTTP username. conn is an existing sqlite3 connection; the caller owns its lifetime.",
+    "code": "def find_user(conn, username):\n    return conn.execute(f\"SELECT id FROM users WHERE username = '{username}'\").fetchall()",
+    "expected": "issues_found",
+    "issue_terms": [
+      "injection",
+      "parameter"
+    ]
+  },
+  {
+    "id": "js-correct",
+    "language": "javascript",
+    "requirements": "Return the sum of an array of finite numbers. An empty array must return 0. Values and total are within the exact integer range.",
+    "code": "function sum(values) {\n  return values.reduce((total, value) => total + value, 0);\n}",
+    "expected": "no_issues",
+    "issue_terms": []
+  },
+  {
+    "id": "js-bounds",
+    "language": "javascript",
+    "requirements": "Return the sum of an array of finite numbers. Empty arrays must return 0.",
+    "code": "function sum(values) {\n  let total = 0;\n  for (let i = 0; i <= values.length; i++) total += values[i];\n  return total;\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "undefined",
+      "bound",
+      "nan"
+    ]
+  },
+  {
+    "id": "js-eval",
+    "language": "javascript",
+    "requirements": "A Node HTTP endpoint accepts arbitrary public request input and should parse a JSON object safely.",
+    "code": "function parseRequest(body) {\n  return eval('(' + body + ')');\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "eval",
+      "execution",
+      "injection"
+    ]
+  },
+  {
+    "id": "ts-correct",
+    "language": "typescript",
+    "requirements": "Select values of a known property from typed objects, preserving array order. Empty arrays return [].",
+    "code": "function pluck<T, K extends keyof T>(items: T[], key: K): T[K][] {\n  return items.map(item => item[key]);\n}",
+    "expected": "no_issues",
+    "issue_terms": []
+  },
+  {
+    "id": "ts-falsy",
+    "language": "typescript",
+    "requirements": "Return the first array entry that is not null or undefined, including 0, false and empty string. Return undefined if no entry qualifies.",
+    "code": "function firstPresent<T>(values: Array<T | null | undefined>): T | undefined {\n  return values.find(value => Boolean(value)) as T | undefined;\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "falsy",
+      "false",
+      "zero",
+      "0"
+    ]
+  },
+  {
+    "id": "ts-xss",
+    "language": "typescript",
+    "requirements": "Display an untrusted visitor's name as plain text in a browser element, with no HTML interpretation.",
+    "code": "function showName(element: HTMLElement, visitorName: string): void {\n  element.innerHTML = visitorName;\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "xss",
+      "html",
+      "injection"
+    ]
+  },
+  {
+    "id": "java-correct",
+    "language": "java",
+    "requirements": "Return whether a nonnull ASCII string is a palindrome, case sensitively. Empty strings are palindromes.",
+    "code": "public class Palindrome {\n  public static boolean isPalindrome(String text) {\n    int left = 0, right = text.length() - 1;\n    while (left < right) {\n      if (text.charAt(left++) != text.charAt(right--)) return false;\n    }\n    return true;\n  }\n}",
+    "expected": "no_issues",
+    "issue_terms": []
+  },
+  {
+    "id": "java-average",
+    "language": "java",
+    "requirements": "Return the fractional arithmetic mean of a nonempty int array. Values are small enough that their sum fits a long.",
+    "code": "public class Stats {\n  public static double average(int[] values) {\n    long total = 0;\n    for (int value : values) total += value;\n    return total / values.length;\n  }\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "division",
+      "truncat",
+      "integer"
+    ]
+  },
+  {
+    "id": "java-command",
+    "language": "java",
+    "requirements": "An HTTP endpoint must list a directory selected by untrusted public input without executing additional commands.",
+    "code": "import java.io.IOException;\npublic class DirectoryService {\n  public static Process list(String directory) throws IOException {\n    return new ProcessBuilder(\"sh\", \"-c\", \"ls \" + directory).start();\n  }\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "injection",
+      "shell"
+    ]
+  },
+  {
+    "id": "cpp-correct",
+    "language": "cpp",
+    "requirements": "Count the occurrences of a given int in a vector; empty vectors produce 0.",
+    "code": "#include <vector>\n#include <cstddef>\nstd::size_t countValue(const std::vector<int>& values, int target) {\n    std::size_t count = 0;\n    for (int value : values) {\n        if (value == target) ++count;\n    }\n    return count;\n}",
+    "expected": "no_issues",
+    "issue_terms": []
+  },
+  {
+    "id": "cpp-bounds",
+    "language": "cpp",
+    "requirements": "Return whether a target int exists in a vector, including empty vectors.",
+    "code": "#include <vector>\nbool contains(const std::vector<int>& values, int target) {\n    for (std::size_t i = 0; i <= values.size(); ++i) {\n        if (values[i] == target) return true;\n    }\n    return false;\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "bound",
+      "undefined",
+      "size"
+    ]
+  },
+  {
+    "id": "cpp-buffer",
+    "language": "cpp",
+    "requirements": "Copy and print an arbitrary untrusted null-terminated name. Names can be longer than 15 characters.",
+    "code": "#include <cstring>\n#include <cstdio>\nvoid showName(const char* name) {\n    char buffer[16];\n    std::strcpy(buffer, name);\n    std::puts(buffer);\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "overflow",
+      "buffer",
+      "strcpy"
+    ]
+  },
+  {
+    "id": "cs-correct",
+    "language": "csharp",
+    "requirements": "Return the maximum value of a nonempty int array; nonempty input is guaranteed.",
+    "code": "public static class Stats {\n    public static int Maximum(int[] values) {\n        int best = values[0];\n        foreach (int value in values) if (value > best) best = value;\n        return best;\n    }\n}",
+    "expected": "no_issues",
+    "issue_terms": []
+  },
+  {
+    "id": "cs-average",
+    "language": "csharp",
+    "requirements": "Return the fractional arithmetic mean of a nonempty int array. The sum fits in long.",
+    "code": "public static class Stats {\n    public static double Average(int[] values) {\n        long total = 0;\n        foreach (int value in values) total += value;\n        return total / values.Length;\n    }\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "division",
+      "integer",
+      "truncat"
+    ]
+  },
+  {
+    "id": "cs-sql",
+    "language": "csharp",
+    "requirements": "Find a user's ID using an untrusted HTTP username. conn is already open and owned by the caller.",
+    "code": "using System.Data.Common;\npublic static class Users {\n    public static object Find(DbConnection conn, string username) {\n        using var command = conn.CreateCommand();\n        command.CommandText = $\"SELECT id FROM users WHERE username = '{username}'\";\n        return command.ExecuteScalar();\n    }\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "injection",
+      "parameter"
+    ]
+  },
+  {
+    "id": "go-correct",
+    "language": "go",
+    "requirements": "Reverse an ASCII-only string. Empty strings return empty strings. ASCII is guaranteed; Unicode support is not required.",
+    "code": "package textutil\nfunc Reverse(text string) string {\n    chars := []byte(text)\n    for left, right := 0, len(chars)-1; left < right; left, right = left+1, right-1 {\n        chars[left], chars[right] = chars[right], chars[left]\n    }\n    return string(chars)\n}",
+    "expected": "no_issues",
+    "issue_terms": []
+  },
+  {
+    "id": "go-empty",
+    "language": "go",
+    "requirements": "Return the maximum integer and true for nonempty slices; return 0,false for empty slices.",
+    "code": "package stats\nfunc Maximum(values []int) (int, bool) {\n    best := values[0]\n    for _, value := range values[1:] {\n        if value > best { best = value }\n    }\n    return best, true\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "panic",
+      "empty",
+      "index"
+    ]
+  },
+  {
+    "id": "go-command",
+    "language": "go",
+    "requirements": "A public endpoint must list a directory supplied by untrusted input without executing additional commands.",
+    "code": "package directories\nimport \"os/exec\"\nfunc List(directory string) ([]byte, error) {\n    return exec.Command(\"sh\", \"-c\", \"ls \" + directory).Output()\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "injection",
+      "shell"
+    ]
+  },
+  {
+    "id": "rust-correct",
+    "language": "rust",
+    "requirements": "Return squares of a slice of i64 values. Inputs have absolute value at most 1000, so overflow is excluded.",
+    "code": "pub fn squares(values: &[i64]) -> Vec<i64> {\n    values.iter().map(|&value| value * value).collect()\n}",
+    "expected": "no_issues",
+    "issue_terms": []
+  },
+  {
+    "id": "rust-empty",
+    "language": "rust",
+    "requirements": "Return Some(maximum) for a nonempty i32 slice; return None for an empty slice.",
+    "code": "pub fn maximum(values: &[i32]) -> Option<i32> {\n    let mut best = values[0];\n    for &value in &values[1..] {\n        if value > best { best = value; }\n    }\n    Some(best)\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "panic",
+      "empty",
+      "index"
+    ]
+  },
+  {
+    "id": "rust-traversal",
+    "language": "rust",
+    "requirements": "Read only files under /srv/uploads for a public endpoint. name is arbitrary untrusted input, including ../ and absolute paths. The process can access other directories.",
+    "code": "use std::{fs, io, path::Path};\npub fn download(name: &str) -> io::Result<Vec<u8>> {\n    fs::read(Path::new(\"/srv/uploads\").join(name))\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "traversal",
+      "absolute",
+      "directory"
+    ]
+  },
+  {
+    "id": "php-correct",
+    "language": "php",
+    "requirements": "Return the sum of an integer array. Empty arrays produce 0. Values and total fit in a PHP integer.",
+    "code": "<?php\nfunction sumValues(array $values): int {\n    $total = 0;\n    foreach ($values as $value) $total += $value;\n    return $total;\n}",
+    "expected": "no_issues",
+    "issue_terms": []
+  },
+  {
+    "id": "php-strpos",
+    "language": "php",
+    "requirements": "Return true when a nonempty substring occurs anywhere in a string, including at position zero.",
+    "code": "<?php\nfunction containsText(string $text, string $needle): bool {\n    return strpos($text, $needle) ? true : false;\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "zero",
+      "0",
+      "false",
+      "position"
+    ]
+  },
+  {
+    "id": "php-sql",
+    "language": "php",
+    "requirements": "Find a user ID using an untrusted HTTP username. $db is an existing PDO connection owned by the caller.",
+    "code": "<?php\nfunction findUser(PDO $db, string $username) {\n    return $db->query(\"SELECT id FROM users WHERE username = '\" . $username . \"'\")->fetchColumn();\n}",
+    "expected": "issues_found",
+    "issue_terms": [
+      "injection",
+      "parameter",
+      "prepared"
+    ]
+  },
+  {
+    "id": "ruby-correct",
+    "language": "ruby",
+    "requirements": "Count the occurrences of each case-sensitive string in an array; empty arrays return an empty hash.",
+    "code": "def word_frequency(words)\n  words.each_with_object(Hash.new(0)) { |word, counts| counts[word] += 1 }\nend",
+    "expected": "no_issues",
+    "issue_terms": []
+  },
+  {
+    "id": "ruby-average",
+    "language": "ruby",
+    "requirements": "Return the fractional arithmetic mean of a nonempty array of integers.",
+    "code": "def average(values)\n  values.sum / values.length\nend",
+    "expected": "issues_found",
+    "issue_terms": [
+      "division",
+      "integer",
+      "truncat"
+    ]
+  },
+  {
+    "id": "ruby-yaml",
+    "language": "ruby",
+    "requirements": "Load session data from an untrusted visitor's YAML text. Only plain JSON-like scalar/list/map data is allowed; object instantiation must be forbidden.",
+    "code": "require 'yaml'\ndef load_session(payload)\n  YAML.unsafe_load(payload)\nend",
+    "expected": "issues_found",
+    "issue_terms": [
+      "deserial",
+      "unsafe",
+      "object"
+    ]
+  }
+]

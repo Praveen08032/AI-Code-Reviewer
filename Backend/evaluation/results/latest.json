@@ -1,0 +1,509 @@
+{
+  "started_at": "2026-11-03T09:30:01.387195+00:00",
+  "model": "models/gemini-3.5-flash-lite",
+  "scope": "Static AI classification against manually labeled examples. No submitted or improved code was compiled/executed. This is not proof of correctness or a security certification.",
+  "cases": [
+    {
+      "id": "py-correct",
+      "language": "python",
+      "expected": "no_issues",
+      "review": {
+        "correctness_status": "correct",
+        "correctness_reason": "The function correctly computes the maximum value of a nonempty list of integers by initializing the best value with the first element and iterating through the remaining elements. The time complexity is O(N) and the space complexity is O(N) due to slicing, or O(1) if iterating directly over the list without slicing.",
+        "readability_score": 9,
+        "efficiency_score": 8,
+        "errors": [],
+        "missing_items": [],
+        "suggestions": [
+          "Consider iterating directly over the list or using a standard library function like max(values) for better performance and readability."
+        ],
+        "corrected_code": "def maximum(values):\n    best = values[0]\n    for value in values[1:]:\n        if value > best:\n            best = value\n    return best",
+        "review_complete": true
+      },
+      "observed": "no_issues",
+      "expected_issue_mentioned": false,
+      "seconds": 3.23
+    },
+    {
+      "id": "py-bounds",
+      "language": "python",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The binary search implementation contains a boundary error. The upper bound initialization is 'hi = len(values)', which means for a non-empty list, 'hi' starts at an index out of bounds. When 'lo' and 'hi' evaluate to the end of the array, 'mid' can equal 'len(values)', leading to an IndexError when accessing 'values[mid]'. Additionally, the loop condition 'lo <= hi' combined with 'hi = len(values)' allows 'mid' to exceed the valid index range of the list. The time complexity is O(log n) and space complexity is O(1).",
+        "readability_score": 8,
+        "efficiency_score": 9,
+        "errors": [
+          "IndexError: list index out of range when 'hi' is initialized to 'len(values)' and 'mid' evaluates to 'len(values)' during execution."
+        ],
+        "missing_items": [],
+        "suggestions": [
+          "Change the initial upper bound from 'hi = len(values)' to 'hi = len(values) - 1' and adjust the loop condition to 'lo <= hi'."
+        ],
+        "corrected_code": "def binary_search(values, target):\n    lo, hi = 0, len(values) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if values[mid] == target:\n            return mid\n        if values[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 4.91
+    },
+    {
+      "id": "py-sql",
+      "language": "python",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The function uses Python string formatting to embed the untrusted `username` input directly into the SQL query string. This is a critical security vulnerability (SQL Injection), allowing malicious users to execute arbitrary SQL commands. Furthermore, `fetchall()` returns a list of tuples, but the function name `find_user` typically implies returning a single user record or list of matching rows; however, the primary issue is the SQL injection vulnerability. Time complexity is O(N) where N is the number of rows matching the query, and space complexity is O(K) where K is the result set size.",
+        "readability_score": 6,
+        "efficiency_score": 8,
+        "errors": [
+          "SQL injection vulnerability: untrusted input `username` is directly interpolated into the SQL query string using f-strings."
+        ],
+        "missing_items": [
+          "Parameterization for SQL query execution to prevent SQL injection."
+        ],
+        "suggestions": [
+          "Use parameterized queries (e.g., `conn.execute('SELECT id FROM users WHERE username = ?', (username,))`) to safely handle untrusted input."
+        ],
+        "corrected_code": "def find_user(conn, username):\n    return conn.execute(\"SELECT id FROM users WHERE username = ?\", (username,)).fetchall()",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 4.75
+    },
+    {
+      "id": "js-correct",
+      "language": "javascript",
+      "expected": "no_issues",
+      "review": {
+        "correctness_status": "correct",
+        "correctness_reason": "The function correctly calculates the sum of an array of finite numbers using reduce with an initial value of 0, correctly handling empty arrays by returning 0. Time complexity is O(N) where N is the length of the array, and space complexity is O(1).",
+        "readability_score": 10,
+        "efficiency_score": 10,
+        "errors": [],
+        "missing_items": [],
+        "suggestions": [],
+        "corrected_code": "function sum(values) {\n  return values.reduce((total, value) => total + value, 0);\n}",
+        "review_complete": true
+      },
+      "observed": "no_issues",
+      "expected_issue_mentioned": false,
+      "seconds": 2.94
+    },
+    {
+      "id": "js-bounds",
+      "language": "javascript",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The submitted loop condition `i <= values.length` attempts to access `values[values.length]`, which evaluates to `undefined`. Adding `undefined` to `total` results in `NaN` instead of a numeric sum. Furthermore, an empty array `[]` will return `NaN` because it attempts to add `values[0]` (`undefined`) to `total`. The time complexity is O(N) and space complexity is O(1), but the off-by-one error breaks correctness.",
+        "readability_score": 4,
+        "efficiency_score": 10,
+        "errors": [
+          "Loop condition uses `<=` instead of `<` in `function sum(values) { let total = 0; for (let i = 0; i <= values.length; i++) total += values[i]; return total; }`, causing out-of-bounds access and returning NaN."
+        ],
+        "missing_items": [],
+        "suggestions": [
+          "Change the loop condition from `i <= values.length` to `i < values.length` to correctly iterate only over valid indices of the array."
+        ],
+        "corrected_code": "function sum(values) {\n  let total = 0;\n  for (let i = 0; i < values.length; i++) total += values[i];\n  return total;\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 5.44
+    },
+    {
+      "id": "js-eval",
+      "language": "javascript",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The submitted code uses `eval()` to parse the request body. This is a critical Remote Code Execution (RCE) vulnerability because arbitrary public input can execute arbitrary JavaScript code within the context of the Node.js process. The time complexity of parsing is O(N) where N is the length of the string, and space complexity is O(N) to store the parsed object. The correct and safe method for parsing JSON is `JSON.parse()`.",
+        "readability_score": 1,
+        "efficiency_score": 5,
+        "errors": [
+          "Line 2: Use of `eval()` to parse untrusted request input introduces a severe Remote Code Execution (RCE) vulnerability."
+        ],
+        "missing_items": [
+          "Error handling for malformed JSON inputs using try/catch blocks."
+        ],
+        "suggestions": [
+          "Replace `eval('(' + body + ')')` with `JSON.parse(body)` and wrap it in a try/catch block to handle SyntaxError exceptions safely."
+        ],
+        "corrected_code": "function parseRequest(body) {\n  try {\n    return JSON.parse(body);\n  } catch (error) {\n    throw new Error('Invalid JSON input');\n  }\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 3.52
+    },
+    {
+      "id": "ts-correct",
+      "language": "typescript",
+      "expected": "no_issues",
+      "review": {
+        "correctness_status": "correct",
+        "correctness_reason": "The submitted TypeScript function correctly implements the requirement to pluck values of a known property from typed objects while preserving array order. It leverages TypeScript generics with keyof constraints to ensure type safety. For empty arrays, Array.prototype.map correctly returns an empty array. The time complexity is O(n) and space complexity is O(n), which is optimal.",
+        "readability_score": 10,
+        "efficiency_score": 10,
+        "errors": [],
+        "missing_items": [],
+        "suggestions": [],
+        "corrected_code": "function pluck<T, K extends keyof T>(items: T[], key: K): T[K][] {\n  return items.map(item => item[key]);\n}",
+        "review_complete": true
+      },
+      "observed": "no_issues",
+      "expected_issue_mentioned": false,
+      "seconds": 3.14
+    },
+    {
+      "id": "ts-falsy",
+      "language": "typescript",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The submitted code uses `Boolean(value)` inside the `find` predicate. This causes falsy values such as `0`, `false`, and `\"\"` (empty string) to be evaluated as `false`, skipping them when they should be considered valid entries according to the requirements. The time complexity is O(N) and space complexity is O(1), but the implementation fails to meet the functional requirement.",
+        "readability_score": 8,
+        "efficiency_score": 10,
+        "errors": [
+          "Location: values.find(value => Boolean(value)) \nCause: Using Boolean(value) treats 0, false, and empty strings as falsy. \nConsequence: Valid entries such as 0, false, or empty strings are incorrectly skipped and not returned."
+        ],
+        "missing_items": [],
+        "suggestions": [
+          "Change the predicate to check explicitly against null and undefined, for example: `value => value !== null && value !== undefined`."
+        ],
+        "corrected_code": "function firstPresent<T>(values: Array<T | null | undefined>): T | undefined {\n  return values.find(value => value !== null && value !== undefined) as T | undefined;\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 3.94
+    },
+    {
+      "id": "ts-xss",
+      "language": "typescript",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The function uses `element.innerHTML = visitorName;` to display an untrusted visitor's name. This introduces a critical Cross-Site Scripting (XSS) vulnerability because any HTML or JavaScript code embedded within `visitorName` will be parsed and executed by the browser. The time complexity is O(N) where N is the length of the string, and space complexity is O(N), which is optimal, but the security flaw makes it incorrect.",
+        "readability_score": 10,
+        "efficiency_score": 10,
+        "errors": [
+          "Location: showName function. Cause: Assigning untrusted input `visitorName` to `element.innerHTML`. Consequence: Allows Cross-Site Scripting (XSS) attacks if the input contains malicious HTML or script tags."
+        ],
+        "missing_items": [],
+        "suggestions": [
+          "Replace `element.innerHTML` with `element.textContent` to ensure the visitor's name is rendered strictly as plain text, preventing any HTML interpretation or script execution."
+        ],
+        "corrected_code": "function showName(element: HTMLElement, visitorName: string): void {\n  element.textContent = visitorName;\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 3.36
+    },
+    {
+      "id": "java-correct",
+      "language": "java",
+      "expected": "no_issues",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The submitted code does not handle null inputs as required by the specification ('Return whether a nonnull ASCII string is a palindrome'). Passing a null string will throw a NullPointerException at text.length(). The time complexity is O(N) and space complexity is O(1), which is optimal.",
+        "readability_score": 9,
+        "efficiency_score": 10,
+        "errors": [
+          "Location: isPalindrome method. Cause: Missing null check for the input parameter text. Consequence: Throws NullPointerException when a null string is passed, violating the nonnull requirement in the specification."
+        ],
+        "missing_items": [],
+        "suggestions": [
+          "Add a null check at the beginning of the isPalindrome method to throw an IllegalArgumentException or handle null inputs appropriately."
+        ],
+        "corrected_code": "public class Palindrome {\n  public static boolean isPalindrome(String text) {\n    if (text == null) {\n      throw new IllegalArgumentException(\"Text must not be null\");\n    }\n    int left = 0, right = text.length() - 1;\n    while (left < right) {\n      if (text.charAt(left++) != text.charAt(right--)) return false;\n    }\n    return true;\n  }\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": false,
+      "seconds": 3.47
+    },
+    {
+      "id": "java-average",
+      "language": "java",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The method performs integer division (total / values.length) between two integer/long types before returning a double. Consequently, any fractional part is truncated, returning an incorrect fractional arithmetic mean. Time complexity is O(N) and space complexity is O(1).",
+        "readability_score": 8,
+        "efficiency_score": 10,
+        "errors": [
+          "Location: Stats.average line 5. Cause: Integer division is performed because both 'total' (long) and 'values.length' (int) are integral types. Consequence: The fractional part of the average is truncated, returning a whole number as a double instead of the actual fractional arithmetic mean."
+        ],
+        "missing_items": [],
+        "suggestions": [
+          "Cast either 'total' or 'values.length' to double (e.g., (double) total / values.length) to ensure floating-point division is performed."
+        ],
+        "corrected_code": "public class Stats {\n  public static double average(int[] values) {\n    long total = 0;\n    for (int value : values) total += value;\n    return (double) total / values.length;\n  }\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 3.84
+    },
+    {
+      "id": "java-command",
+      "language": "java",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The submitted code spawns a shell process to list a directory using untrusted public input via string concatenation. This introduces a severe remote command injection vulnerability (CWE-78), allowing arbitrary command execution on the host system. Furthermore, using an external shell and 'ls' for directory listing is inefficient, platform-dependent, and violates the requirement not to execute additional commands.",
+        "readability_score": 5,
+        "efficiency_score": 3,
+        "errors": [
+          "Critical security vulnerability: Remote Command Injection via ProcessBuilder with string concatenation and shell execution ('sh -c'). Untrusted public input 'directory' can be manipulated to execute arbitrary commands."
+        ],
+        "missing_items": [
+          "Input validation to ensure the directory path is safe, restricted, and resides within an intended base directory (path traversal protection).",
+          "Direct Java IO/NIO directory listing using java.io.File or java.nio.file.Files instead of spawning a system shell process."
+        ],
+        "suggestions": [
+          "Replace ProcessBuilder and shell execution with java.nio.file.Files.list or java.io.File.list to safely iterate over directory contents without executing system commands or risking command injection."
+        ],
+        "corrected_code": "import java.io.IOException;\nimport java.nio.file.Files;\nimport java.nio.file.Path;\nimport java.nio.file.Paths;\nimport java.util.List;\nimport java.util.stream.Collectors;\nimport java.util.stream.Stream;\n\npublic class DirectoryService {\n  public static List<String> list(String directory) throws IOException {\n    Path dirPath = Paths.get(directory).normalize();\n    try (Stream<Path> stream = Files.list(dirPath)) {\n      return stream.map(p -> p.getFileName().toString()).collect(Collectors.toList());\n    }\n  }\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 3.75
+    },
+    {
+      "id": "cpp-correct",
+      "language": "cpp",
+      "expected": "no_issues",
+      "review": {
+        "correctness_status": "correct",
+        "correctness_reason": "The submitted code correctly implements counting the occurrences of a given integer in a std::vector<int>. It safely handles empty vectors by returning 0, uses appropriate types (std::size_t), and operates with an optimal time complexity of O(N) and space complexity of O(1).",
+        "readability_score": 10,
+        "efficiency_score": 10,
+        "errors": [],
+        "missing_items": [],
+        "suggestions": [],
+        "corrected_code": "#include <vector>\n#include <cstddef>\nstd::size_t countValue(const std::vector<int>& values, int target) {\n    std::size_t count = 0;\n    for (int value : values) {\n        if (value == target) ++count;\n    }\n    return count;\n}",
+        "review_complete": true
+      },
+      "observed": "no_issues",
+      "expected_issue_mentioned": false,
+      "seconds": 3.38
+    },
+    {
+      "id": "cpp-bounds",
+      "language": "cpp",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The function contains a critical buffer overflow/segmentation fault bug. The loop condition uses 'i <= values.size()' instead of 'i < values.size()'. When the vector is empty (values.size() == 0), the loop runs for i = 0, and accesses values[0] which is undefined behavior. Even for non-empty vectors, when i equals values.size(), accessing values[values.size()] violates container bounds. Time complexity is O(N) and space complexity is O(1).",
+        "readability_score": 7,
+        "efficiency_score": 10,
+        "errors": [
+          "Buffer overflow due to incorrect loop bound 'i <= values.size()' instead of 'i < values.size()'. Accessing values[values.size()] results in undefined behavior and potential segmentation faults."
+        ],
+        "missing_items": [],
+        "suggestions": [
+          "Change the loop condition from 'i <= values.size()' to 'i < values.size()', or preferably use std::find or a range-based for loop for better readability and safety."
+        ],
+        "corrected_code": "#include <vector>\nbool contains(const std::vector<int>& values, int target) {\n    for (std::size_t i = 0; i < values.size(); ++i) {\n        if (values[i] == target) return true;\n    }\n    return false;\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 3.41
+    },
+    {
+      "id": "cpp-buffer",
+      "language": "cpp",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The submitted code uses std::strcpy to copy an arbitrary, untrusted null-terminated string into a fixed-size stack buffer of 16 bytes. Because the requirements state that names can be longer than 15 characters, this causes a classic stack-based buffer overflow when an input exceeds the buffer capacity. This leads to undefined behavior, memory corruption, and potential remote code execution vulnerabilities. The time complexity is O(N) where N is the length of the string, and space complexity is O(1) auxiliary space beyond the stack allocation.",
+        "readability_score": 7,
+        "efficiency_score": 7,
+        "errors": [
+          "Buffer overflow vulnerability in showName: std::strcpy copies untrusted input without bounds checking into a fixed 16-byte buffer, violating safety and causing undefined behavior when names exceed 15 characters."
+        ],
+        "missing_items": [],
+        "suggestions": [
+          "Replace the fixed-size stack buffer with dynamically allocated memory (e.g., std::string) or safely handle arbitrary lengths to prevent buffer overflows."
+        ],
+        "corrected_code": "#include <cstring>\n#include <cstdio>\n#include <string>\n\nvoid showName(const char* name) {\n    if (name == nullptr) {\n        return;\n    }\n    std::string buffer(name);\n    std::puts(buffer.c_str());\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 3.49
+    },
+    {
+      "id": "cs-correct",
+      "language": "csharp",
+      "expected": "no_issues",
+      "review": {
+        "correctness_status": "correct",
+        "correctness_reason": "The submitted C# code correctly finds and returns the maximum value of a nonempty int array. It initializes the `best` variable with the first element of the array, iterates through every element using a foreach loop, updates `best` if a larger value is found, and returns it. Time complexity is O(N) where N is the length of the array, and space complexity is O(1). All constraints from the requirements (nonempty input guaranteed) are satisfied.",
+        "readability_score": 10,
+        "efficiency_score": 10,
+        "errors": [],
+        "missing_items": [],
+        "suggestions": [],
+        "corrected_code": "public static class Stats {\n    public static int Maximum(int[] values) {\n        int best = values[0];\n        foreach (int value in values) if (value > best) best = value;\n        return best;\n    }\n}",
+        "review_complete": true
+      },
+      "observed": "no_issues",
+      "expected_issue_mentioned": false,
+      "seconds": 3.25
+    },
+    {
+      "id": "cs-average",
+      "language": "csharp",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The method performs integer division (`total / values.Length`) instead of floating-point division. Because `total` and `values.Length` are both integers, any fractional part is truncated, violating the requirement to return the fractional arithmetic mean. The time complexity is O(N) and space complexity is O(1), which is optimal.",
+        "readability_score": 9,
+        "efficiency_score": 10,
+        "errors": [
+          "Integer division is used instead of floating-point division, causing truncation of the fractional part of the mean."
+        ],
+        "missing_items": [],
+        "suggestions": [
+          "Cast either the numerator or the denominator to double (e.g., `(double)total / values.Length`) to ensure floating-point division."
+        ],
+        "corrected_code": "public static class Stats {\n    public static double Average(int[] values) {\n        long total = 0;\n        foreach (int value in values) total += value;\n        return (double)total / values.Length;\n    }\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 3.75
+    },
+    {
+      "id": "cs-sql",
+      "language": "csharp",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The submitted code constructs a SQL query by string interpolation with an untrusted parameter (`username`), introducing a critical SQL injection vulnerability. An attacker can manipulate the `username` input to execute arbitrary SQL commands against the database. The time complexity is O(1) or dependent on the database query execution time, and space complexity is O(1).",
+        "readability_score": 8,
+        "efficiency_score": 9,
+        "errors": [
+          "Location: Find method command.CommandText assignment. Cause: String interpolation is used to embed the untrusted `username` parameter directly into the SQL command text. Consequence: Severe SQL injection vulnerability allowing malicious users to extract unauthorized data, bypass authentication, or corrupt the database."
+        ],
+        "missing_items": [
+          "Use of parameterized queries (DbParameter) to safely handle untrusted input."
+        ],
+        "suggestions": [
+          "Replace string interpolation with parameterized queries using `DbParameter` objects added to `command.Parameters` to safely encapsulate the `username` input."
+        ],
+        "corrected_code": "using System.Data.Common;\npublic static class Users {\n    public static object Find(DbConnection conn, string username) {\n        using var command = conn.CreateCommand();\n        command.CommandText = \"SELECT id FROM users WHERE username = @username\";\n        var parameter = command.CreateParameter();\n        parameter.ParameterName = \"@username\";\n        parameter.Value = username;\n        command.Parameters.Add(parameter);\n        return command.ExecuteScalar();\n    }\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 2.84
+    },
+    {
+      "id": "go-correct",
+      "language": "go",
+      "expected": "no_issues",
+      "review": {
+        "correctness_status": "correct",
+        "correctness_reason": "The function correctly handles ASCII-only strings by converting the string to a byte slice, swapping elements symmetrically using a two-pointer approach, and returning the reversed string. For an empty string, len(chars)-1 is -1, so left < right (0 < -1) is false, returning an empty string correctly. Time complexity is O(N) and space complexity is O(N) due to byte slice allocation, which is standard in Go since strings are immutable.",
+        "readability_score": 10,
+        "efficiency_score": 10,
+        "errors": [],
+        "missing_items": [],
+        "suggestions": [],
+        "corrected_code": "package textutil\nfunc Reverse(text string) string {\n    chars := []byte(text)\n    for left, right := 0, len(chars)-1; left < right; left, right = left+1, right-1 {\n        chars[left], chars[right] = chars[right], chars[left]\n    }\n    return string(chars)\n}",
+        "review_complete": true
+      },
+      "observed": "no_issues",
+      "expected_issue_mentioned": false,
+      "seconds": 3.39
+    },
+    {
+      "id": "go-empty",
+      "language": "go",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The function does not handle empty slices. If a slice with zero length is passed, accessing values[0] causes a runtime panic (index out of range). Furthermore, the requirements explicitly state to return (0, false) for empty slices. The time complexity is O(N) and space complexity is O(1), which is optimal, but correctness fails on edge cases.",
+        "readability_score": 7,
+        "efficiency_score": 10,
+        "errors": [
+          "Line 3: Accessing values[0] without checking if the slice is empty causes a runtime index out of range panic when an empty slice is provided."
+        ],
+        "missing_items": [
+          "Check for empty slice length to satisfy the requirement of returning (0, false)."
+        ],
+        "suggestions": [
+          "Add a length check at the beginning of the function: if len(values) == 0 { return 0, false }"
+        ],
+        "corrected_code": "package stats\n\nfunc Maximum(values []int) (int, bool) {\n    if len(values) == 0 {\n        return 0, false\n    }\n    best := values[0]\n    for _, value := range values[1:] {\n        if value > best {\n            best = value\n        }\n    }\n    return best, true\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 3.05
+    },
+    {
+      "id": "go-command",
+      "language": "go",
+      "expected": "issues_found",
+      "review": {
+        "correctness_status": "incorrect",
+        "correctness_reason": "The submitted code uses os/exec to run a shell command with unsanitized untrusted user input directly concatenated into the command string. This introduces a severe remote code execution (RCE) and command injection vulnerability. Time and space complexity are dependent on directory listing size, but the security flaw makes it entirely unsafe.",
+        "readability_score": 4,
+        "efficiency_score": 5,
+        "errors": [
+          "Severe command injection and remote code execution vulnerability: concatenating untrusted 'directory' input into a shell command allows arbitrary command execution."
+        ],
+        "missing_items": [
+          "Input validation or safe directory traversal using Go's standard library instead of executing an external shell command."
+        ],
+        "suggestions": [
+          "Replace the use of os/exec and the shell with os.Open and file.Readdirnames or os.ReadDir to list directory contents safely without shell execution."
+        ],
+        "corrected_code": "package directories\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\nfunc List(directory string) ([]byte, error) {\n\tentries, err := os.ReadDir(directory)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tvar names []string\n\tfor _, entry := range entries {\n\t\tnames = append(names, entry.Name())\n\t}\n\treturn json.Marshal(names)\n}",
+        "review_complete": true
+      },
+      "observed": "issues_found",
+      "expected_issue_mentioned": true,
+      "seconds": 4.83
+    },
+    {
+      "id": "rust-correct",
+      "language": "rust",
+      "expected": "no_issues",
+      "error": "Gemini quota is temporarily exhausted. Wait and try again; the owner can check the project's quota.",
+      "status": 429,
+      "seconds": 1.22
+    }
+  ],
+  "summary": {
+    "planned": 30,
+    "attempted": 22,
+    "completed": 21,
+    "provider_failures": 1,
+    "uncertain": 0,
+    "agreement": 0.9523809523809523,
+    "bug_precision": 0.9333333333333333,
+    "bug_recall_decisive_cases": 1.0,
+    "false_alarms": 1,
+    "missed_bugs": 0,
+    "expected_issue_mentioned": 14,
+    "median_seconds": 3.47,
+    "max_seconds": 5.44
+  },
+  "review_instructions_sha256": "f9aa29f9e74f3985373ad559bff5ea8b985c3102744f7cb5a2013d5d6ba17917",
+  "notes": [
+    "The correct Java palindrome received a false alarm about null validation despite the nonnull input precondition. A subsequent prompt clarification about guaranteed inputs still needs a fresh real-provider evaluation.",
+    "The run stopped on Gemini HTTP 429. Nine planned examples remain unfinished, including Rust, PHP and Ruby."
+  ]
+}

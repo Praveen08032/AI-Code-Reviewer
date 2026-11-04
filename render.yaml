@@ -7,8 +7,33 @@ services:
     rootDir: Backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
     envVars:
+      - key: APP_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        sync: false
       - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: models/gemini-flash-latest
+      - key: DATABASE_URL
+        sync: false
+      - key: REVIEW_REQUESTS_PER_MINUTE
+        value: 5
+      - key: CHAT_REQUESTS_PER_MINUTE
+        value: 10
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 465
+      - key: SMTP_SECURITY
+        value: ssl
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
         sync: false
       - key: PYTHON_VERSION
         value: 3.11.9

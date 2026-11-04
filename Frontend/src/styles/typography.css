@@ -1,0 +1,73 @@
+/* Medium-sized text shared by Day and Night appearances. */
+:root { --font-body-size: 16px; --font-label-size: 14px; --font-small-size: 13px; }
+body { font-size: var(--font-body-size); }
+.btn, .page-actions .btn, .tabs button, .field, .qlist b, .rc li,
+.det-in > div, table, .access-note { font-size: var(--font-body-size); }
+.tag, .pill, .tile .tip, .theme-toggle, .ed-foot, .custom-task label,
+.status .t, .status .msg, .scores div, .rc small, .seg button, .qlist small,
+.lang, .question-description, .form label, th, .det-in small,
+.trend .note, .language-chart h3, .language-row { font-size: var(--font-label-size); }
+.field { height: 46px; }
+.task-description { height: 76px; }
+.status { width: 330px; }
+.scores b { font-size: 23px; }
+.rc pre, .det-in pre { font-size: 15px; line-height: 24px; }
+.lib-view pre { font-size: 15px; }
+td code { font-size: 14px; }
+.trend { width: 360px; }
+.trend h3 { font-size: 16px; flex-wrap: wrap; }
+.trend h3 span { font-size: 14px; }
+.tap { font-size: 13px; letter-spacing: .05em; }
+
+/* Keep graph labels readable when the stage scales down to fit its container. */
+.node small.k { font-size: calc(14px * var(--graph-text-scale, 1)); letter-spacing: .06em; }
+.node .cap { font-size: calc(16px * var(--graph-text-scale, 1)); }
+.node .cap small { font-size: calc(14px * var(--graph-text-scale, 1)); }
+.lbl { font-size: calc(14px * var(--graph-text-scale, 1)); padding: 3px 8px; }
+.node .ttl { font-size: 22px; }
+.node .ttl span { font-size: 18px; }
+.node .v.s { font-size: 26px; }
+.big-agent .ttl { font-size: 32px; }
+.big-agent .ttl span { font-size: 23px; }
+.big-agent .state { font-size: calc(13px * var(--graph-text-scale, 1)); }
+.icard { width: 330px; max-width: calc(100vw - 24px); }
+.icard .k, .icard .st div { font-size: 14px; }
+.icard h4 { font-size: 22px; }
+.icard p { font-size: 16px; }
+.icard .hint { font-size: 13px; }
+
+/* Chat typography is scoped so lazy-loaded component styles cannot shrink it. */
+.chat-panel { font-size: 16px; }
+.chat-panel .chat-header h2 { font-size: 19px; }
+.chat-panel .chat-header p, .chat-panel .chat-eyebrow,
+.chat-panel .chat-thinking, .chat-panel .chat-history-caption { font-size: 13px; }
+.chat-panel .chat-toolbar button, .chat-panel .chat-suggestion,
+.chat-panel .chat-message-label small, .chat-panel .chat-muted,
+.chat-panel .chat-delete-confirm p, .chat-panel .chat-delete-confirm h4,
+.chat-panel .chat-history .chat-delete-confirm button { font-size: 14px; }
+.chat-panel .chat-welcome p, .chat-panel .chat-history b { font-size: 15px; }
+.chat-panel .chat-bubble, .chat-panel .chat-compose textarea { font-size: 16px; }
+.chat-panel .chat-avatar { font-size: 12px; }
+.chat-panel .chat-code > small, .chat-panel .chat-history time,
+.chat-panel .chat-history .chat-clear, .chat-panel .chat-error { font-size: 13px; }
+.chat-panel .chat-code pre { font-size: 14px; }
+.chat-panel .chat-input-actions small { font-size: 12px; }
+
+/* Sign-in, profile and owner access screens use the same body/label sizes. */
+.auth-shell .auth-eyebrow, .auth-shell .auth-features span { font-size: 13px; }
+.auth-shell .auth-card > p, .auth-shell .auth-setup { font-size: 16px; }
+.auth-shell .auth-progress, .auth-shell .auth-card .notice,
+.auth-shell .auth-privacy b, .auth-shell .auth-privacy p,
+.auth-shell .auth-footer { font-size: 14px; }
+.rail .account .me { font-size: 14px; }
+.account-panel small, .account-panel > span, .account-panel p,
+.access-pagination { font-size: 14px; }
+.account-panel a, .account-panel button { font-size: 16px; }
+.access-owner { font-size: 13px; }
+
+@media (max-width: 700px) {
+  .status { width: auto; }
+  .scores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scores > div:last-child { grid-column: 1 / -1; }
+  .tap { right: 16px; }
+}

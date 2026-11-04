@@ -1,0 +1,130 @@
+.chat-launcher {
+  position: fixed; left: 22px; bottom: 82px; z-index: 130;
+  width: 52px; height: 52px; display: grid; place-items: center;
+  border: 1px solid #e4e6e9; border-radius: 18px;
+  background: #f9fafb; color: #252a31; cursor: pointer;
+  box-shadow: 0 6px 22px rgba(0,0,0,.22); transition: transform .16s, background .16s;
+}
+.chat-launcher:hover { transform: translateY(-2px); background: #fff; }
+.chat-launcher[aria-expanded="true"] { background: #e9edf1; }
+.chat-launcher svg { width: 24px; height: 24px; }
+.chat-panel {
+  --chat-bg: #fff; --chat-soft: #f5f6f8; --chat-text: #252a31;
+  --chat-muted: #737b87; --chat-line: #e8ebee; --chat-user: #f0f2f5;
+  --chat-accent: #292e35; --chat-on-accent: #fff; --chat-code: #f5f6f8;
+  position: fixed; left: 88px; bottom: 24px; z-index: 200;
+  width: min(448px, calc(100vw - 112px)); height: min(680px, calc(100dvh - 48px));
+  display: flex; flex-direction: column; overflow: hidden;
+  color-scheme: light; background: var(--chat-bg); color: var(--chat-text);
+  border: 1px solid rgba(255,255,255,.75); border-radius: 24px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.3), 0 3px 12px rgba(0,0,0,.08);
+  font: 400 14px/1.65 "Segoe UI", system-ui, sans-serif;
+}
+.chat-panel :focus-visible { outline: 2px solid #8c9bae; outline-offset: 3px; border-radius: 8px; }
+.chat-panel ::selection { background: #dbe6f0; color: #1e293b; }
+.chat-panel ::-webkit-scrollbar { width: 6px; height: 6px; }
+.chat-panel ::-webkit-scrollbar-track { background: transparent; }
+.chat-panel ::-webkit-scrollbar-thumb { background: #d5dbe2; border-radius: 8px; }
+.chat-panel svg { width: 18px; height: 18px; flex-shrink: 0; }
+.chat-header, .chat-toolbar, .chat-compose, .chat-error { flex-shrink: 0; }
+.chat-header { display: flex; align-items: center; gap: 12px; padding: 22px 22px 18px; }
+.chat-brand-mark, .chat-welcome-mark { display: grid; place-items: center; background: var(--chat-accent); color: var(--chat-on-accent); }
+.chat-brand-mark { width: 40px; height: 40px; border-radius: 13px; flex-shrink: 0; }
+.chat-brand-mark svg { width: 23px; height: 23px; }
+.chat-heading { flex: 1; min-width: 0; }
+.chat-header h2 { font: 650 17px/1.3 "Segoe UI", system-ui, sans-serif; letter-spacing: -.4px; color: var(--chat-text); }
+.chat-header h2 span { font-weight: 400; color: var(--chat-muted); }
+.chat-header p { font-size: 11px; color: var(--chat-muted); margin-top: 4px; }
+.chat-icon { display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent; color: var(--chat-muted); width: 32px; height: 32px; cursor: pointer; }
+.chat-icon:hover { background: var(--chat-soft); color: var(--chat-text); }
+.chat-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 0 22px 16px; border-bottom: 1px solid var(--chat-line); }
+.chat-view-switch { display: flex; padding: 3px; gap: 2px; border-radius: 11px; background: var(--chat-soft); }
+.chat-toolbar button { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--chat-muted); font: 500 12px "Segoe UI", system-ui, sans-serif; cursor: pointer; }
+.chat-toolbar button svg { width: 14px; height: 14px; }
+.chat-view-switch button.selected { background: var(--chat-bg); color: var(--chat-text); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.chat-toolbar .chat-new { color: var(--chat-text); }
+.chat-toolbar .chat-new:hover { background: var(--chat-soft); }
+.chat-toolbar button:disabled { opacity: .45; cursor: default; }
+.chat-messages, .chat-history { flex: 1; min-height: 0; overflow: auto; padding: 22px; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #d5dbe2 transparent; }
+.chat-welcome { padding: 26px 6px; text-align: left; }
+.chat-welcome-mark { width: 48px; height: 48px; border-radius: 16px; margin-bottom: 22px; }
+.chat-welcome-mark svg { width: 27px; height: 27px; }
+.chat-eyebrow { display: block; font-size: 11px; color: var(--chat-muted); margin-bottom: 8px; }
+.chat-welcome b { display: block; font-size: 25px; line-height: 1.25; letter-spacing: -.8px; font-weight: 600; color: var(--chat-text); }
+.chat-welcome p { color: var(--chat-muted); font-size: 13px; margin: 12px 0 24px; }
+.chat-suggestion { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 12px 14px; border: 1px solid var(--chat-line); border-radius: 12px; background: transparent; color: var(--chat-text); font: 500 12px "Segoe UI", system-ui, sans-serif; cursor: pointer; text-align: left; }
+.chat-suggestion:hover { background: var(--chat-soft); }
+.chat-suggestion span { color: var(--chat-muted); font-size: 17px; }
+.chat-message { margin-bottom: 24px; min-width: 0; }
+.chat-message-label { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.chat-message-label small { color: var(--chat-muted); font-size: 11px; font-weight: 500; }
+.chat-avatar { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--chat-line); border-radius: 7px; font-size: 10px; color: var(--chat-muted); background: var(--chat-bg); }
+.chat-avatar svg { width: 13px; height: 13px; }
+.chat-message.assistant .chat-avatar { background: var(--chat-accent); color: var(--chat-on-accent); border-color: transparent; }
+.chat-bubble { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.75; }
+.chat-message.assistant .chat-bubble { margin-left: 29px; }
+.chat-message.user { margin-left: 38px; }
+.chat-message.user .chat-message-label { justify-content: flex-end; }
+.chat-message.user .chat-bubble { padding: 12px 15px; border-radius: 15px 4px 15px 15px; background: var(--chat-user); color: var(--chat-text); }
+.chat-code { margin: 12px 0; border: 1px solid var(--chat-line); border-radius: 10px; overflow: hidden; white-space: normal; background: var(--chat-code); }
+.chat-code > small { display: block; color: var(--chat-muted); padding: 5px 10px; border-bottom: 1px solid var(--chat-line); font: 500 10px/1.6 "Segoe UI", system-ui, sans-serif; }
+.chat-code pre { margin: 0; padding: 12px; overflow: auto; white-space: pre; font: 11.5px/1.7 "Cascadia Code", Consolas, monospace; }
+.chat-muted { color: var(--chat-muted); font-size: 12px; }
+.chat-thinking { display: flex; align-items: center; gap: 9px; margin: 6px 0 12px 29px; color: var(--chat-muted); font-size: 11px; }
+.chat-thinking > span { display: flex; gap: 3px; }
+.chat-thinking i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: chat-dot 1.2s ease-in-out infinite; }
+.chat-thinking i:nth-child(2) { animation-delay: .15s; }
+.chat-thinking i:nth-child(3) { animation-delay: .3s; }
+@keyframes chat-dot { 50% { opacity: .3; transform: translateY(-2px); } }
+.chat-compose { padding: 14px 18px 18px; background: var(--chat-bg); }
+.chat-input-box { border: 1px solid #dfe3e8; border-radius: 15px; background: var(--chat-bg); box-shadow: 0 2px 6px rgba(0,0,0,.025); transition: border-color .15s, box-shadow .15s; }
+.chat-input-box:focus-within { border-color: #9ba8b8; box-shadow: 0 0 0 3px rgba(133,153,177,.10); }
+.chat-compose textarea { width: 100%; display: block; min-height: 64px; max-height: 140px; resize: none; border: 0; border-radius: 15px; background: transparent; color: var(--chat-text); padding: 13px 14px 4px; font: 13px/1.6 "Segoe UI", system-ui, sans-serif; }
+.chat-compose textarea:focus-visible { outline: none; }
+.chat-compose textarea::placeholder { color: #9ba2ad; }
+.chat-input-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 8px 8px 14px; }
+.chat-input-actions small { color: var(--chat-muted); font-size: 9px; line-height: 1.4; }
+.chat-input-actions button { display: grid; place-items: center; width: 31px; height: 31px; padding: 0; border: 0; border-radius: 9px; background: var(--chat-accent); color: var(--chat-on-accent); cursor: pointer; }
+.chat-input-actions button svg { width: 18px; height: 18px; }
+.chat-input-actions button:disabled { background: var(--chat-soft); color: #aeb5be; cursor: default; }
+.chat-error { margin: 0; padding: 11px 22px; border-top: 1px solid #f0dddd; background: #fff7f6; color: #a43e37; font-size: 11px; }
+.chat-history h3 { font-size: 17px; line-height: 1.3; font-weight: 600; letter-spacing: -.4px; }
+.chat-history-caption { color: var(--chat-muted); font-size: 11px; margin: 6px 0 20px; }
+.chat-history button { display: flex; align-items: flex-start; gap: 11px; width: 100%; padding: 13px 10px; margin-bottom: 6px; border: 1px solid transparent; border-radius: 12px; background: transparent; color: var(--chat-text); text-align: left; cursor: pointer; }
+.chat-history button > svg { width: 16px; height: 16px; color: var(--chat-muted); margin-top: 2px; }
+.chat-history button:hover, .chat-history button[aria-current="true"] { background: var(--chat-soft); border-color: var(--chat-line); }
+.chat-history-text { display: block; flex: 1; min-width: 0; }
+.chat-history b { display: block; font: 500 12px/1.6 "Segoe UI", system-ui, sans-serif; overflow-wrap: anywhere; }
+.chat-history time { display: block; font: 10px/1.6 "Segoe UI", system-ui, sans-serif; color: var(--chat-muted); margin-top: 4px; }
+.chat-history-arrow { color: var(--chat-muted); font-size: 16px; }
+.chat-history-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.chat-history .chat-clear { width: auto; margin: 0; padding: 5px 7px; align-items: center; gap: 5px; color: #a44343; font: 500 11px "Segoe UI", system-ui, sans-serif; }
+.chat-history .chat-clear svg { width: 14px; height: 14px; }
+.chat-history button:disabled { opacity: .4; cursor: default; }
+.chat-history-item { display: flex; align-items: center; margin-bottom: 6px; border: 1px solid transparent; border-radius: 12px; }
+.chat-history-item:hover, .chat-history-item[data-active="true"] { background: var(--chat-soft); border-color: var(--chat-line); }
+.chat-history .chat-history-open { flex: 1; width: auto; min-width: 0; margin: 0; border: 0; background: transparent; }
+.chat-history .chat-delete { display: grid; place-items: center; width: 32px; height: 32px; padding: 7px; margin: 0 6px 0 0; flex: 0 0 32px; color: var(--chat-muted); }
+.chat-history .chat-delete svg { width: 16px; height: 16px; margin: 0; }
+.chat-history .chat-delete:hover, .chat-history .chat-clear:hover { color: #b43737; background: #fff0f0; }
+.chat-delete-confirm { margin: 0 0 16px; padding: 14px; border: 1px solid #eacfcf; border-radius: 12px; background: #fff8f7; color: #572b2b; }
+.chat-delete-confirm h4 { font-size: 13px; font-weight: 600; }
+.chat-delete-confirm p { margin-top: 6px; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.chat-delete-confirm > div { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.chat-history .chat-delete-confirm button { width: auto; margin: 0; padding: 7px 12px; border: 1px solid #e4d5d5; background: #fff; color: #572b2b; font: 500 12px "Segoe UI", system-ui, sans-serif; }
+.chat-history .chat-delete-confirm .chat-confirm-delete { border-color: #ad3a3a; background: #ad3a3a; color: #fff; }
+.chat-panel[data-theme="dark"] { --chat-bg: #181a1f; --chat-soft: #25282e; --chat-text: #edf0f3; --chat-muted: #939ba7; --chat-line: #30343b; --chat-user: #2b2f36; --chat-accent: #e9edf3; --chat-on-accent: #20242a; --chat-code: #111318; color-scheme: dark; border-color: #353940; }
+.chat-panel[data-theme="dark"] .chat-input-box { border-color: #3c424d; }
+.chat-panel[data-theme="blue"] { --chat-accent: #365fa5; --chat-user: #eef3fc; --chat-soft: #f1f5fc; }
+@media (max-width: 700px) {
+  .chat-launcher { left: 12px; width: 44px; height: 44px; border-radius: 15px; }
+  .chat-panel { left: 12px; bottom: 138px; width: calc(100vw - 24px); height: min(620px, calc(100dvh - 154px)); border-radius: 20px; }
+  .chat-header { padding: 18px 16px 14px; gap: 9px; }
+  .chat-header h2 { font-size: 16px; }
+  .chat-header p { font-size: 10px; }
+  .chat-brand-mark { width: 34px; height: 34px; border-radius: 11px; }
+  .chat-toolbar { padding: 0 16px 14px; }
+  .chat-messages, .chat-history { padding: 18px 16px; }
+  .chat-compose { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .chat-thinking i { animation: none; } }

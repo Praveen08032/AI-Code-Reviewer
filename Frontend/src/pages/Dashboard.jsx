@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { createGraph, ICON, countUp, sleep, prefersReducedMotion } from "@/lib/graph";
-import { getHistory, errorMessage } from "@/lib/api";
+import { getHistory, errorMessage, languageName, languageBadge } from "@/lib/api";
+import PageActions from "@/components/PageActions";
 
 const firstLine = (code = "") => (code.split("\n").find((l) => l.trim()) || "(empty)").trim();
 const ago = (iso) => {
@@ -9,6 +10,7 @@ const ago = (iso) => {
   return d < 1 ? "Today" : d < 2 ? "Yesterday" : `${Math.floor(d)} days ago`;
 };
 const short = (s, n = 22) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
+const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 export default function Dashboard() {
   const [subs, setSubs] = useState(null);
@@ -23,11 +25,15 @@ export default function Dashboard() {
     if (!subs || !subs.length) return null;
     const n = subs.length, passed = subs.filter((s) => s.pass_status).length;
     const avg = (k) => subs.reduce((a, s) => a + (s[k] || 0), 0) / n;
-    const py = subs.filter((s) => s.language === "python").length;
+    const counts = subs.reduce((all, submission) => {
+      all[submission.language] = (all[submission.language] || 0) + 1;
+      return all;
+    }, {});
+    const languages = Object.entries(counts).sort((a, b) => b[1] - a[1]);
     const recent = [...subs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3);
     const series = [...subs].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).slice(-12);
     const first = series[0], last = series[series.length - 1];
-    return { n, passed, pass: Math.round((passed / n) * 100), r: avg("readability_score"), e: avg("efficiency_score"), py, js: n - py, recent, series, first, last };
+    return { n, passed, pass: Math.round((passed / n) * 100), r: avg("readability_score"), e: avg("efficiency_score"), languages, recent, series, first, last };
   }, [subs]);
 
   useEffect(() => {
@@ -37,19 +43,19 @@ export default function Dashboard() {
     const rec = stats.recent;
     const pos = [[40, 40, ""], [10, 215, ""], [110, 390, "far"]];
     rec.forEach((s, i) => {
-      const [x, y, cls] = pos[i], lang = s.language === "python" ? "Python" : "JS";
-      g.node(`r${i}`, x, y, 260, 96, card(`${ago(s.created_at)} · ${lang}`, short(firstLine(s.code)), "s"), cls, {
-        k: "Recent review", t: firstLine(s.code), b: s.pass_status ? "Passed this review." : "Needs work: below the pass mark of 5 in at least one score.",
+      const [x, y, cls] = pos[i], lang = languageBadge(s.language);
+      g.node(`r${i}`, x, y, 260, 96, card(`${ago(s.created_at)} · ${lang}`, escapeHtml(short(firstLine(s.code))), "s"), cls, {
+        k: "Recent review", t: firstLine(s.code), b: s.pass_status ? "Passed the AI review; submitted code was not executed." : "Needs work: check the review's correctness assessment, bugs and scores.",
         s: [["Readability", `${s.readability_score ?? "–"} / 10`], ["Efficiency", `${s.efficiency_score ?? "–"} / 10`]], w: [i],
       });
     });
     g.node("agent", 500, 270, 420, 210, `<div class="card"><div>${ICON.bot(56)}<div class="ttl">CodeCheck AI<span>Your progress</span></div><span class="state">syncing</span></div></div>`, "big-agent",
       { k: "Agent", t: "CodeCheck AI · progress", b: "Every review you submit flows through the agent and updates the numbers on this dashboard.", s: [["Reviews", String(stats.n)], ["Passed", String(stats.passed)]], w: rec.map((_, i) => i).concat([3, 4, 5, 6, 7].map((x) => x - (3 - rec.length))) });
-    g.node("k1", 1080, 40, 230, 110, card("Submissions", '<span data-c="n">0</span>'), "", { k: "Stat", t: `Submissions · ${stats.n}`, b: "Total pieces of code reviewed and saved to your database.", s: [["Python", String(stats.py)], ["JavaScript", String(stats.js)]], w: [rec.length] });
-    g.node("k2", 1150, 210, 230, 110, card("Pass rate", '<span data-c="p">0</span>', "g"), "", { k: "Stat", t: `Pass rate · ${stats.pass}%`, b: "A review passes when readability and efficiency are both 5 or more.", s: [["Passed", String(stats.passed)], ["Needs work", String(stats.n - stats.passed)]], w: [rec.length + 1] });
+    g.node("k1", 1080, 40, 230, 110, card("Submissions", '<span data-c="n">0</span>'), "", { k: "Stat", t: `Submissions · ${stats.n}`, b: "Total pieces of code reviewed and saved to your database.", s: stats.languages.map(([id, count]) => [languageName(id), String(count)]), w: [rec.length] });
+    g.node("k2", 1150, 210, 230, 110, card("AI pass rate", '<span data-c="p">0</span>', "g"), "", { k: "Stat", t: `AI pass rate · ${stats.pass}%`, b: "Reviews pass when a complete AI assessment reports correct code, no bugs or missing requirements, and both scores at least 5. This is not an execution test result.", s: [["Passed AI review", String(stats.passed)], ["Needs work", String(stats.n - stats.passed)]], w: [rec.length + 1] });
     g.node("k3", 1130, 380, 230, 110, card("Avg readability", '<span data-c="r">0</span>'), "", { k: "Stat", t: `Average readability · ${stats.r.toFixed(1)}`, b: "How easy your code is to follow, out of 10.", s: [["First", `${stats.first.readability_score ?? "–"}`], ["Latest", `${stats.last.readability_score ?? "–"}`]], w: [rec.length + 2] });
     g.node("k4", 1040, 560, 230, 110, card("Avg efficiency", '<span data-c="e">0</span>'), "", { k: "Stat", t: `Average efficiency · ${stats.e.toFixed(1)}`, b: "How well your code uses time and memory, out of 10.", s: [["First", `${stats.first.efficiency_score ?? "–"}`], ["Latest", `${stats.last.efficiency_score ?? "–"}`]], w: [rec.length + 3] });
-    g.node("k5", 560, 590, 290, 110, card("Languages", `Python ${stats.py} <small>· JS ${stats.js}</small>`), "far", { k: "Stat", t: "Languages", b: "How your practice is split between Python and JavaScript.", s: [["Python", String(stats.py)], ["JavaScript", String(stats.js)]], w: [rec.length + 4] });
+    g.node("k5", 560, 590, 290, 110, card("Languages", `${stats.languages.length} <small>practised</small>`), "far", { k: "Stat", t: "Languages", b: "How your practice is split across programming languages.", s: stats.languages.map(([id, count]) => [languageName(id), String(count)]), w: [rec.length + 4] });
     const inPts = [g.P("agent", "l", 0.3), g.P("agent", "l", 0.55), g.P("agent", "b", 0.2)];
     rec.forEach((_, i) => g.wire(g.P(`r${i}`, "r"), inPts[i], { label: "1 item", step: 0, flare: i < 2, white: i === 2 }));
     g.wire(g.P("agent", "r", 0.15), g.P("k1", "l"), { label: "Submissions", step: 1, flare: true });
@@ -93,7 +99,7 @@ export default function Dashboard() {
         <h1 id="h-dash">Dashboard<span>/your progress</span></h1>
         {stats && <span className="tag green">{stats.n} reviews</span>}
         <span className="sp" />
-        <Link className="btn btn-g" to="/submit?new=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>New review</Link>
+        <PageActions><Link className="btn btn-g" to="/submit?new=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>New review</Link></PageActions>
       </div>
       <div className="dash-area">
         <div className="canvas" ref={canvasRef} />
@@ -105,16 +111,24 @@ export default function Dashboard() {
             <Link className="btn btn-g" to="/submit?new=1">Mark my code</Link>
           </div></div>
         )}
-        {stats && <div className="tap" aria-hidden="true"><i />TAP ANY CARD FOR DETAILS</div>}
+        {stats && <div className="tap" aria-hidden="true"><i />HOVER OR TAP A CARD FOR DETAILS</div>}
+        {stats && <div className="language-chart glass" aria-label="Reviews by language">
+          <h3>Languages</h3>
+          {stats.languages.map(([id, count]) => <div className="language-row" key={id}>
+            <span title={languageName(id)}>{languageBadge(id)}</span>
+            <progress value={count} max={stats.n} aria-label={`${languageName(id)}: ${count} reviews`} />
+            <b>{count}</b>
+          </div>)}
+        </div>}
         {trend && (
           <div className="trend glass" aria-label={`Marks over your last ${stats.series.length} reviews`}>
-            <h3>Marks over time<span><span style={{ color: "var(--green)" }}>●</span> Readability &nbsp;<span style={{ color: "#fff" }}>●</span> Efficiency</span></h3>
+            <h3>Marks over time<span><span style={{ color: "var(--green)" }}>●</span> Readability &nbsp;<span style={{ color: "var(--chart-secondary, #eef1ed)" }}>●</span> Efficiency</span></h3>
             <svg viewBox="0 0 320 90" preserveAspectRatio="none" aria-hidden="true">
               <line x1="0" x2="320" y1={trend.pass} y2={trend.pass} stroke="rgba(255,90,80,.6)" strokeDasharray="4 4" />
-              {trend.n > 1 && <path className="ln" pathLength="1" stroke="#4ade5a" d={trend.r} />}
-              {trend.n > 1 && <path className="ln" pathLength="1" stroke="#eef1ed" style={{ animationDelay: ".7s" }} d={trend.e} />}
-              {trend.rp.map(([cx, cy], i) => <circle key={"r" + i} className="pt" cx={cx} cy={cy} r="4" fill="#4ade5a" />)}
-              {trend.ep.map(([cx, cy], i) => <circle key={"e" + i} className="pt" cx={cx} cy={cy} r="4" fill="#eef1ed" />)}
+              {trend.n > 1 && <path className="ln" pathLength="1" stroke="var(--green)" d={trend.r} />}
+              {trend.n > 1 && <path className="ln" pathLength="1" stroke="var(--chart-secondary, #eef1ed)" style={{ animationDelay: ".7s" }} d={trend.e} />}
+              {trend.rp.map(([cx, cy], i) => <circle key={"r" + i} className="pt" cx={cx} cy={cy} r="4" fill="var(--green)" />)}
+              {trend.ep.map(([cx, cy], i) => <circle key={"e" + i} className="pt" cx={cx} cy={cy} r="4" fill="var(--chart-secondary, #eef1ed)" />)}
             </svg>
             <div className="note">{trend.n < 3 ? `Based on your ${trend.n} review${trend.n === 1 ? "" : "s"} so far. The lines fill in as you review more code.` : `Your last ${trend.n} reviews · red line = pass mark (5)`}</div>
           </div>

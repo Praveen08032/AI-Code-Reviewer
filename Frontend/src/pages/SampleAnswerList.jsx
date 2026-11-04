@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getSamples, errorMessage } from "@/lib/api";
+import PageActions from "@/components/PageActions";
+import { getSamples, errorMessage, SUPPORTED_LANGUAGES, languageName, languageBadge } from "@/lib/api";
 
 export default function SampleAnswerList() {
   const [samples, setSamples] = useState(null);
@@ -17,7 +18,7 @@ export default function SampleAnswerList() {
   }, []);
 
   const list = useMemo(() => (samples || []).filter((s) => (lang === "all" || s.language === lang) && s.question_title.includes(find.trim().toLowerCase())), [samples, lang, find]);
-  const sel = samples?.find((s) => s.id === current);
+  const sel = list.find((s) => s.id === current) || list[0];
   const flash = (t) => { setToast(t); setTimeout(() => setToast(""), 1800); };
 
   return (
@@ -26,7 +27,7 @@ export default function SampleAnswerList() {
         <h1 id="h-lib">Sample Library<span>/model answers</span></h1>
         {samples && <span className="tag green">{samples.length} answers</span>}
         <span className="sp" />
-        <Link className="btn btn-o" to="/add-sample">+ Add sample</Link>
+        <PageActions><Link className="btn btn-o" to="/add-sample">+ Add sample</Link></PageActions>
       </div>
       {error && <div className="notice err" style={{ marginTop: 18 }}>{error}</div>}
       <div className="lib">
@@ -34,15 +35,15 @@ export default function SampleAnswerList() {
           <label className="sr-only" htmlFor="find">Search questions</label>
           <input className="field" id="find" type="search" placeholder="Search questions" value={find} onChange={(e) => setFind(e.target.value)} />
           <div className="seg" role="group" aria-label="Language">
-            {[["all", "All"], ["python", "Python"], ["javascript", "JavaScript"]].map(([v, l]) => <button key={v} aria-pressed={lang === v} onClick={() => setLang(v)}>{l}</button>)}
+            {[{ id: "all", name: "All" }, ...SUPPORTED_LANGUAGES].map((language) => <button key={language.id} aria-pressed={lang === language.id} onClick={() => setLang(language.id)}>{language.name}</button>)}
           </div>
           <div className="qlist">
             {samples === null && <p className="loading">Loading…</p>}
             {samples && !list.length && <p style={{ color: "var(--muted)", padding: 20, textAlign: "center" }}>No questions match “{find}”.</p>}
             {list.map((s) => (
-              <button key={s.id} aria-current={s.id === current} onClick={() => setCurrent(s.id)}>
+              <button key={s.id} aria-current={s.id === sel?.id} onClick={() => setCurrent(s.id)}>
                 <b>{s.question_title}</b><small>{s.ideal_code.split("\n").length} lines</small>
-                <span className={`lang ${s.language === "javascript" ? "js" : ""}`}>{s.language === "python" ? "PY" : "JS"}</span>
+                <span className="lang" title={languageName(s.language)}>{languageBadge(s.language)}</span>
               </button>
             ))}
           </div>
@@ -51,7 +52,8 @@ export default function SampleAnswerList() {
           {sel ? (
             <>
               <h2>{sel.question_title}</h2>
-              <div className="meta">{sel.language === "python" ? "Python" : "JavaScript"} · {sel.ideal_code.split("\n").length} lines · model answer</div>
+              <div className="meta">{languageName(sel.language)} · {sel.ideal_code.split("\n").length} lines · model answer</div>
+              {sel.description && <p className="question-description">{sel.description}</p>}
               <pre key={sel.id}>{sel.ideal_code.split("\n").map((l, n) => <span className="row" key={n} style={{ animationDelay: `${n * 30}ms` }}><span className="n">{n + 1}</span>{l || " "}</span>)}</pre>
               <div className="acts">
                 <button className="btn btn-g" onClick={() => navigate(`/submit?lang=${sel.language}&q=${encodeURIComponent(sel.question_title)}`)}>Try this question</button>
