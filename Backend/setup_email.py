@@ -1,8 +1,10 @@
 """Configure a verification-email sender locally without exposing secrets in chat."""
+import argparse
 from getpass import getpass
 from pathlib import Path
 import re
 import smtplib
+from urllib.parse import urlencode
 import webbrowser
 
 from dotenv import dotenv_values, set_key
@@ -27,7 +29,18 @@ def save_settings(values, path=ENV_FILE):
         set_key(path, key, value, quote_mode="always")
 
 
-def main():
+def sender_address(value):
+    value = value.strip()
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", value):
+        raise argparse.ArgumentTypeError("Enter a valid sender email address.")
+    return value
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--gmail-address", type=sender_address,
+                        help="Use this Gmail sender and open Google settings for that account.")
+    args = parser.parse_args(argv)
     print("CODECHECK AI - VERIFICATION EMAIL SETUP\n")
     print("This configures the ONE sender account that mails verification codes to users.")
     print("Users still sign in with email/password; they do not need provider app registration.")
@@ -37,13 +50,17 @@ def main():
     if all(existing.get(key) for key in SETTING_KEYS):
         if input("Email settings already exist. Type CHANGE to replace, or Enter to keep: ").strip().lower() != "change":
             return
-    gmail = input("Press Enter for a Gmail sender, or type CUSTOM for another SMTP provider: ").strip().lower() != "custom"
+    gmail = bool(args.gmail_address) or input("Press Enter for a Gmail sender, or type CUSTOM for another SMTP provider: ").strip().lower() != "custom"
     if gmail:
+        sender = args.gmail_address or sender_address(input("Sender Gmail address: "))
+        print(f"\nVerification emails will be sent FROM {sender}.")
         print("\nGoogle requires 2-Step Verification and a separate 16-character APP PASSWORD.")
-        print("Use your own sender Google account on the page that opens. Do not enter its normal password here.")
-        print("Create an app password named CodeCheck AI and paste that app password below.")
-        webbrowser.open("https://myaccount.google.com/apppasswords")
-        sender = input("Sender Gmail address: ").strip()
+        print("The Google page opens for this sender. Confirm the account email before continuing.")
+        print("1. If needed, turn on 2-Step Verification in Google Account > Security.")
+        print("2. On App passwords, enter CodeCheck AI as the app name and choose Create.")
+        print("3. Google SHOWS the app password on that page; it is not emailed to you.")
+        print("4. Paste it into the hidden prompt below. Do not use your usual Gmail password.")
+        webbrowser.open("https://myaccount.google.com/apppasswords?" + urlencode({"authuser": sender}))
         values = {"SMTP_HOST": "smtp.gmail.com", "SMTP_PORT": "465", "SMTP_SECURITY": "ssl", "SMTP_USERNAME": sender, "SMTP_FROM": sender}
     else:
         values = {"SMTP_HOST": input("SMTP host: ").strip(), "SMTP_PORT": input("SMTP port [587]: ").strip() or "587",
@@ -83,5 +100,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (EOFError, KeyboardInterrupt):
+    except (EOFError, KeyboardInterrupt, argparse.ArgumentTypeError) as error:
+        if isinstance(error, argparse.ArgumentTypeError):
+            print(str(error))
         print("\nStopped. Only completed setup steps were saved.")

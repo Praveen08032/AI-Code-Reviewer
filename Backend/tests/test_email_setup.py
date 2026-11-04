@@ -1,8 +1,12 @@
+import argparse
+import io
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
 from dotenv import dotenv_values
-from setup_email import save_settings, validate_settings
+from setup_email import main, save_settings, sender_address, validate_settings
 
 
 class EmailSetupTests(unittest.TestCase):
@@ -24,6 +28,25 @@ class EmailSetupTests(unittest.TestCase):
         for changes in [{"SMTP_SECURITY": "none"}, {"SMTP_PORT": "0"}, {"SMTP_FROM": "bad\nBcc: victim@example.com"}, {"SMTP_PASSWORD": ""}]:
             with self.assertRaises(ValueError):
                 validate_settings({**self.settings(), **changes})
+
+    def test_prefilled_sender_targets_its_google_account_and_cancel_keeps_settings_unsaved(self):
+        with patch("setup_email.dotenv_values", return_value={}), \
+                patch("setup_email.input", side_effect=AssertionError("The sender is already provided")), \
+                patch("setup_email.getpass", return_value=""), \
+                patch("setup_email.webbrowser.open") as browser, \
+                patch("setup_email.save_settings") as save, \
+                patch("sys.stdout", new_callable=io.StringIO) as output:
+            main(["--gmail-address", "sender@gmail.com"])
+        opened = urlparse(browser.call_args.args[0])
+        self.assertEqual(opened.hostname, "myaccount.google.com")
+        self.assertEqual(parse_qs(opened.query)["authuser"], ["sender@gmail.com"])
+        self.assertIn("it is not emailed to you", output.getvalue())
+        save.assert_not_called()
+
+    def test_sender_rejects_invalid_or_injected_email(self):
+        for address in ("not-an-email", "sender@gmail.com\nBcc: other@example.com"):
+            with self.assertRaises(argparse.ArgumentTypeError):
+                sender_address(address)
 
 
 if __name__ == "__main__":
