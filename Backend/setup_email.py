@@ -36,11 +36,28 @@ def sender_address(value):
     return value
 
 
+def check_and_save(values, path=ENV_FILE):
+    validate_settings(values)
+    settings = {"host": values["SMTP_HOST"], "port": int(values["SMTP_PORT"]),
+                "security": values["SMTP_SECURITY"], "username": values["SMTP_USERNAME"],
+                "password": values["SMTP_PASSWORD"], "sender": values["SMTP_FROM"]}
+    with smtp_connection(settings):
+        pass
+    save_settings(values, path)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gmail-address", type=sender_address,
                         help="Use this Gmail sender and open Google settings for that account.")
+    parser.add_argument("--gui", action="store_true", help="Open a password box with a Paste button.")
     args = parser.parse_args(argv)
+    if args.gui:
+        if not args.gmail_address:
+            parser.error("Use --gmail-address with --gui.")
+        from email_setup_window import show_gmail_setup
+        show_gmail_setup(args.gmail_address, check_and_save)
+        return
     print("CODECHECK AI - VERIFICATION EMAIL SETUP\n")
     print("This configures the ONE sender account that mails verification codes to users.")
     print("Users still sign in with email/password; they do not need provider app registration.")
@@ -78,19 +95,14 @@ def main(argv=None):
             continue
         values["SMTP_PASSWORD"] = secret
         try:
-            validate_settings(values)
-            settings = {"host": values["SMTP_HOST"], "port": int(values["SMTP_PORT"]), "security": values["SMTP_SECURITY"],
-                        "username": values["SMTP_USERNAME"], "password": secret, "sender": values["SMTP_FROM"]}
             print("Checking the secure SMTP connection and sender login...")
-            with smtp_connection(settings):
-                pass
+            check_and_save(values)
         except smtplib.SMTPAuthenticationError:
             print("Sender login was rejected. Check the username and SMTP/app password. Nothing was saved.")
             continue
         except (OSError, smtplib.SMTPException, ValueError):
             print("Could not establish the secure SMTP connection. Check the host, port and provider settings. Nothing was saved.")
             return
-        save_settings(values)
         print("\nSender login checked and settings saved. Return to Codex and say DONE to restart the backend.")
         print("No verification codes or credentials were printed.")
         input("Press Enter to close this setup window.")

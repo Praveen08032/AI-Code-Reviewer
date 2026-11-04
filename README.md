@@ -167,6 +167,8 @@ The local helper opens the provider settings, accepts hidden sender credentials,
 
 To select your Gmail account directly, run `.\venv\Scripts\python.exe setup_email.py --gmail-address sender@gmail.com` with your own sender address. The Google page opens for that account. Name the app **CodeCheck AI**, choose **Create**, and paste the app password into the helper's hidden prompt. Google displays this password on the page; it does not email it to you.
 
+For a password box with a **Paste** button and character count, add `--gui` to that command. Choose **Check & Save** to test the Gmail login before saving. The password stays masked and is never printed.
+
 Verification is mandatory: missing/failed email delivery blocks account activation. No development mode returns codes to the browser or logs. Codes expire in ten minutes, allow five attempts, are single-use, and are replaced when a code is resent after the one-minute cooldown. The database stores only a hash of the code tied to the high-entropy challenge and the salted password hash. Pending requests alone cannot access reviews, chat or owner records.
 
 Existing email/password accounts remain unverified until their inbox is confirmed. Their old session/access tokens cannot bypass this check. Sign in with the existing password to request a code. If an address was previously registered without verification, the real inbox owner can use Create account to choose the final password; verification invalidates earlier sessions while preserving the account's data. Owner permission still requires the private owner link. Fake/test inboxes cannot complete verification.

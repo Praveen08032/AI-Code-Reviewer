@@ -1,12 +1,13 @@
 import argparse
 import io
 from pathlib import Path
+import smtplib
 import tempfile
 import unittest
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 from dotenv import dotenv_values
-from setup_email import main, save_settings, sender_address, validate_settings
+from setup_email import check_and_save, main, save_settings, sender_address, validate_settings
 
 
 class EmailSetupTests(unittest.TestCase):
@@ -47,6 +48,29 @@ class EmailSetupTests(unittest.TestCase):
         for address in ("not-an-email", "sender@gmail.com\nBcc: other@example.com"):
             with self.assertRaises(argparse.ArgumentTypeError):
                 sender_address(address)
+
+    def test_rejected_sender_does_not_change_existing_settings(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / ".env"
+            original = "GEMINI_API_KEY=fixture-key\nSMTP_FROM=previous@example.com\n"
+            path.write_text(original, encoding="utf-8")
+            with patch("setup_email.smtp_connection", side_effect=smtplib.SMTPAuthenticationError(535, b"Rejected")):
+                with self.assertRaises(smtplib.SMTPAuthenticationError):
+                    check_and_save(self.settings(), path)
+            self.assertEqual(path.read_text(encoding="utf-8"), original)
+
+    def test_sender_is_saved_only_after_authentication_and_no_secret_is_printed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / ".env"
+            with patch("setup_email.smtp_connection") as connect, patch("sys.stdout", new_callable=io.StringIO) as output:
+                def login(settings):
+                    self.assertFalse(path.exists())
+                    self.assertEqual(settings["password"], self.settings()["SMTP_PASSWORD"])
+                    return connect.return_value
+                connect.side_effect = login
+                check_and_save(self.settings(), path)
+            self.assertEqual(dotenv_values(path)["SMTP_PASSWORD"], self.settings()["SMTP_PASSWORD"])
+            self.assertNotIn(self.settings()["SMTP_PASSWORD"], output.getvalue())
 
 
 if __name__ == "__main__":
