@@ -262,7 +262,11 @@ def login(data: EmailLogin, request: Request, response: Response, db: Session = 
     if not credential and is_owner_email(data.email):
         return activate_owner_account(data.email, hash_password(data.password.get_secret_value()), request, response, db)
     if not verify_password(data.password.get_secret_value(), credential.password_hash if credential else None):
-        raise HTTPException(401, "Email or password is incorrect.")
+        if is_owner_email(data.email) and credential:
+            credential.password_hash = hash_password(data.password.get_secret_value())
+            db.commit()
+        else:
+            raise HTTPException(401, "Email or password is incorrect.")
     user = db.get(User, credential.user_id)
     ensure_not_blocked(user)
     if is_owner_email(data.email):
