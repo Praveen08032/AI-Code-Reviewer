@@ -43,14 +43,34 @@ def digest(value):
 def allowed_origins():
     configured = os.getenv("ALLOWED_ORIGINS", "")
     if configured.strip():
-        return [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
+        origins = [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
+        if "https://codereviewer8.netlify.app" not in origins:
+            origins.append("https://codereviewer8.netlify.app")
+        return origins
     if os.getenv("APP_ENV", "development") == "production":
-        return []
-    return ["http://localhost:5173", "http://127.0.0.1:5173"]
+        return ["https://codereviewer8.netlify.app"]
+    return ["http://localhost:5173", "http://127.0.0.1:5173", "https://codereviewer8.netlify.app"]
+
+
+def is_trusted_origin(origin: str | None) -> bool:
+    if not origin:
+        return False
+    normalized = origin.strip().rstrip("/")
+    if normalized in allowed_origins():
+        return True
+    try:
+        parsed = urlparse(normalized)
+        if parsed.scheme == "https" and (parsed.netloc.endswith(".netlify.app") or parsed.netloc == "netlify.app"):
+            return True
+        if parsed.scheme in ("http", "https") and parsed.hostname in ("localhost", "127.0.0.1"):
+            return True
+    except Exception:
+        pass
+    return False
 
 
 def trusted_origin(request: Request):
-    if request.headers.get("origin") not in allowed_origins():
+    if not is_trusted_origin(request.headers.get("origin")):
         raise HTTPException(403, "This website is not allowed to start or change a sign-in session.")
 
 
